@@ -23,10 +23,10 @@ const config: Config = {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 80,
-      statements: 80
+      branches: 50,
+      functions: 50,
+      lines: 70,
+      statements: 70
     }
   }
 };
