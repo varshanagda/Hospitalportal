@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: project_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5433:5432"  # host:container
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    container_name: project_backend
+    restart: always
+    environment:
+      DB_HOST: postgres
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+      DB_PORT: 5432
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      PORT: 5001
+    ports:
+      - "5001:5001"  # host:container
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: project_frontend
+    restart: always
+    ports:
+      - "3000:80"  # host:container
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
