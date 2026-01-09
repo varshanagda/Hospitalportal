@@ -35,7 +35,7 @@ const AdminDashboard = () => {
     try {
       const res = await getAllAppointments();
       setAppointments(res.appointments);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load appointments");
     }
   };
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
     try {
       const res = await getAllDoctors("", false);
       setDoctors(res.doctors);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load doctors");
     }
   };
@@ -54,7 +54,7 @@ const AdminDashboard = () => {
       await updateAppointmentStatus(id, status);
       setMessage(`Appointment ${status}`);
       loadAppointments();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to update status");
     }
   };
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
         consultation_fee: 0
       });
       loadDoctors();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to create doctor");
     }
   };

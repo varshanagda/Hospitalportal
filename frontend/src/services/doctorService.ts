@@ -18,6 +18,7 @@ export interface Doctor {
   consultation_fee?: number;
   bio?: string;
   is_approved: boolean;
+  is_available?: boolean;
   full_name?: string;
   email?: string;
   phone?: string;
@@ -76,5 +77,26 @@ export const approveDoctor = async (id: number, isApproved: boolean) => {
     { is_approved: isApproved },
     { headers: getAuthHeaders() }
   );
+  return res.data;
+};
+
+export interface CreateDoctorData {
+  email: string;
+  password: string;
+  full_name: string;
+  phone?: string;
+  specialization: string;
+  qualification?: string;
+  experience_years?: number;
+  consultation_fee?: number;
+}
+
+export const createDoctor = async (data: CreateDoctorData) => {
+  const res = await axios.post("http://localhost:5001/auth/register", {
+    ...data,
+    role: "doctor"
+  }, {
+    headers: getAuthHeaders(),
+  });
   return res.data;
 };

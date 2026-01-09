@@ -30,7 +30,7 @@ const UserDashboard = () => {
       setError("");
       const res = await getAllDoctors(searchSpecialization.trim(), true);
       setDoctors(res.doctors || []);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load doctors");
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ const UserDashboard = () => {
     try {
       const res = await getAvailableSlots(selectedDoctorId, selectedDate);
       setAvailableSlots(res.slots);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load slots");
     }
   };
@@ -51,7 +51,7 @@ const UserDashboard = () => {
     try {
       const res = await getUserAppointments();
       setAppointments(res.appointments);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load appointments");
     }
   };
@@ -70,7 +70,7 @@ const UserDashboard = () => {
       setAvailableSlots([]);
       setSelectedDoctorId(null);
       loadAppointments();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to book appointment");
     }
   };
@@ -84,7 +84,7 @@ const UserDashboard = () => {
       await cancelAppointment(id, reason);
       setMessage("Appointment cancelled");
       loadAppointments();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to cancel appointment");
     }
   };

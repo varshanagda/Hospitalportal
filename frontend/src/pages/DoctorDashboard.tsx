@@ -31,7 +31,7 @@ const DoctorDashboard = () => {
     try {
       const res = await getDoctorSlots();
       setSlots(res.slots);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load slots");
     }
   };
@@ -40,7 +40,7 @@ const DoctorDashboard = () => {
     try {
       const res = await getDoctorAppointments();
       setAppointments(res.appointments);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to load appointments");
     }
   };
@@ -52,7 +52,7 @@ const DoctorDashboard = () => {
       setMessage("Slot created successfully!");
       setNewSlot({ slot_date: "", start_time: "", end_time: "", max_bookings: 1 });
       loadSlots();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to create slot");
     }
   };
@@ -63,7 +63,7 @@ const DoctorDashboard = () => {
       await deleteSlot(id);
       setMessage("Slot deleted");
       loadSlots();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to delete slot");
     }
   };
@@ -73,7 +73,7 @@ const DoctorDashboard = () => {
       await updateAppointmentStatus(id, status);
       setMessage(`Appointment ${status}`);
       loadAppointments();
-    } catch (err: any) {
+    } catch (_err: any) {
       setError("Failed to update status");
     }
   };
