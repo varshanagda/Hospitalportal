@@ -75,6 +75,16 @@ export const getAllAppointments = async (status?: string, date?: string) => {
   return res.data;
 };
 
+export const updateAppointmentStatus = async (id: number, status: string, notes?: string) => {
+  const endpoint = status === "approved" ? "approve" : status === "completed" ? "complete" : "cancel";
+  const res = await axios.put(
+    `${API_URL}/${id}/${endpoint}`,
+    { admin_notes: notes, cancellation_reason: notes },
+    { headers: getAuthHeaders() }
+  );
+  return res.data;
+};
+
 export const approveAppointment = async (id: number, adminNotes?: string) => {
   const res = await axios.put(
     `${API_URL}/${id}/approve`,
