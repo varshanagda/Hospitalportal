@@ -46,7 +46,7 @@ module.exports = [
     files: ['**/*.test.js', '**/*.spec.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'commonjs',
+      sourceType: 'module',  // Changed to 'module' for ES6 imports
       globals: {
         // Node.js globals
         __dirname: 'readonly',

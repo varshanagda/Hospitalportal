@@ -6,7 +6,18 @@ const config: Config = {
   testMatch: ['**/src/tests/**/*.test.(ts|js)'],
   collectCoverage: true,
   coverageDirectory: 'coverage',
-
+  extensionsToTreatAsEsm: ['.ts'],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      useESM: true,
+    }],
+    '^.+\\.(js|jsx)$': ['ts-jest', {
+      useESM: true,
+    }],
+  },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   coverageThreshold: {
     global: {
       branches: 70,
