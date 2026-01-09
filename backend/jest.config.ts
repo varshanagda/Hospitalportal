@@ -6,18 +6,21 @@ const config: Config = {
   testMatch: ['**/src/tests/**/*.test.(ts|js)'],
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      useESM: true,
+      tsconfig: {
+        allowJs: true,
+        esModuleInterop: true,
+      }
     }],
     '^.+\\.(js|jsx)$': ['ts-jest', {
-      useESM: true,
+      tsconfig: {
+        allowJs: true,
+        esModuleInterop: true,
+      }
     }],
   },
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
   coverageThreshold: {
     global: {
       branches: 70,
