@@ -7,7 +7,8 @@
     "test": "jest",
     "build": "tsc",
     "dev": "nodemon src/server.js",
-    "lint": "eslint src --ext .ts,.js"
+    "lint": "eslint src --ext .ts,.js",
+    "sonar": "sonar-scanner -Dsonar.host.url=http://localhost:9001 -Dsonar.token=sqp_a9ed1b44e81ddb6f3e24aedf904982f51bd5749a"
   },
   "keywords": [],
   "author": "",

@@ -31,7 +31,9 @@ jobs:
 
       - name: Run Tests with Coverage
         run: npm run test:coverage
+
       - name: SonarQube Scan
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: sonarsource/sonarqube-scan-action@v2
         with:
           projectBaseDir: backend
