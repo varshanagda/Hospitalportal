@@ -31,7 +31,7 @@ const Login = () => {
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto", padding: "20px" }}>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-        <h2>Login</h2>
+      <h2>Login</h2>
         <input
           placeholder="Email"
           type="email"
@@ -56,7 +56,7 @@ const Login = () => {
           Don't have an account?{" "}
           <a href="/register" style={{ color: "blue" }}>Register</a>
         </p>
-      </form>
+    </form>
     </div>
   );
 };

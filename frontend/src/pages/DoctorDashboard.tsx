@@ -47,13 +47,17 @@ const DoctorDashboard = () => {
 
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setMessage("");
     try {
       await createSlot(newSlot);
       setMessage("Slot created successfully!");
       setNewSlot({ slot_date: "", start_time: "", end_time: "", max_bookings: 1 });
       loadSlots();
     } catch (_err: any) {
-      setError("Failed to create slot");
+      console.error("Slot creation error:", _err);
+      const errorMsg = _err.response?.data?.message || _err.message || "Failed to create slot";
+      setError(errorMsg);
     }
   };
 
