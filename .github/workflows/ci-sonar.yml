@@ -150,7 +150,7 @@ jobs:
             -Dsonar.test.inclusions=src/tests/**/*
             -Dsonar.sourceEncoding=UTF-8
         continue-on-error: true
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
 
       - name: SonarQube Quality Gate Check
         id: sonarqube-quality-gate-check
@@ -216,7 +216,7 @@ jobs:
             -Dsonar.test.inclusions=src/tests/**/*
             -Dsonar.sourceEncoding=UTF-8
         continue-on-error: true
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
 
       - name: SonarQube Quality Gate Check (Frontend)
         id: sonarqube-quality-gate-check-frontend
