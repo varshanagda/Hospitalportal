@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { logout, getCurrentUser } from "../services/authService";
 import { getAllAppointments, updateAppointmentStatus, type Appointment } from "../services/appointmentService";
 import { getAllDoctors, createDoctor, type Doctor } from "../services/doctorService";
+import Popup from "../components/Popup";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -10,6 +11,17 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<"appointments" | "doctors">("appointments");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [popup, setPopup] = useState<{
+    isOpen: boolean;
+    type: "alert" | "confirm" | "prompt";
+    title: string;
+    message?: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "alert",
+    title: ""
+  });
   
   // New doctor form
   const [newDoctor, setNewDoctor] = useState({
@@ -81,10 +93,16 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    if (confirm("Logout?")) {
-      logout();
-      navigate("/login");
-    }
+    setPopup({
+      isOpen: true,
+      type: "confirm",
+      title: "Logout",
+      message: "Are you sure you want to logout?",
+      onConfirm: () => {
+        logout();
+        navigate("/login");
+      }
+    });
   };
 
   return (
@@ -95,7 +113,35 @@ const AdminDashboard = () => {
           <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
           <p style={{ margin: "5px 0 0 0", color: "#666" }}>Welcome, {user?.full_name || user?.email}</p>
         </div>
-        <button onClick={handleLogout} style={{ padding: "10px 20px", cursor: "pointer" }}>
+        <button 
+          onClick={handleLogout} 
+          style={{
+            background: "rgba(0,0,0,0.1)",
+            color: "#333",
+            border: "1px solid rgba(0,0,0,0.2)",
+            width: "50px",
+            height: "50px",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "11px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = "rgba(0,0,0,0.1)";
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+          }}
+        >
           Logout
         </button>
       </div>
@@ -308,6 +354,18 @@ const AdminDashboard = () => {
           )}
         </div>
       )}
+
+      {/* Popup Component */}
+      <Popup
+        isOpen={popup.isOpen}
+        onClose={() => setPopup({ ...popup, isOpen: false })}
+        onConfirm={popup.onConfirm}
+        title={popup.title}
+        message={popup.message}
+        type={popup.type}
+        confirmText={popup.type === "confirm" ? "Yes" : "OK"}
+        cancelText="Cancel"
+      />
     </div>
   );
 };

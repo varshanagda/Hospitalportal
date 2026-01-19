@@ -92,10 +92,7 @@ export interface CreateDoctorData {
 }
 
 export const createDoctor = async (data: CreateDoctorData) => {
-  const res = await axios.post("http://localhost:5001/auth/register", {
-    ...data,
-    role: "doctor"
-  }, {
+  const res = await axios.post(`${API_URL}`, data, {
     headers: getAuthHeaders(),
   });
   return res.data;

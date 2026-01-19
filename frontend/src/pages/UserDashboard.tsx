@@ -4,6 +4,7 @@ import { logout, getCurrentUser } from "../services/authService";
 import { getAllDoctors, type Doctor } from "../services/doctorService";
 import { getAvailableSlots, type Slot } from "../services/slotService";
 import { getUserAppointments, bookAppointment, cancelAppointment, type Appointment } from "../services/appointmentService";
+import Popup from "../components/Popup";
 
 const UserDashboard = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -16,6 +17,20 @@ const UserDashboard = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [popup, setPopup] = useState<{
+    isOpen: boolean;
+    type: "alert" | "confirm" | "prompt";
+    title: string;
+    message?: string;
+    inputPlaceholder?: string;
+    onConfirm?: () => void;
+    inputValue?: string;
+  }>({
+    isOpen: false,
+    type: "alert",
+    title: ""
+  });
+  const [promptInput, setPromptInput] = useState("");
   const navigate = useNavigate();
   const user = getCurrentUser();
 
@@ -60,196 +75,749 @@ const UserDashboard = () => {
     loadDoctors();
   };
 
-  const handleBookSlot = async (slotId: number) => {
-    const reason = prompt("Enter reason for appointment:");
-    if (!reason) return;
-
-    try {
-      await bookAppointment({ slot_id: slotId, reason });
-      setMessage("Appointment booked successfully!");
-      setAvailableSlots([]);
-      setSelectedDoctorId(null);
-      loadAppointments();
-    } catch (_err: any) {
-      setError("Failed to book appointment");
-    }
+  const handleBookSlot = (slotId: number) => {
+    setPromptInput("");
+    setPopup({
+      isOpen: true,
+      type: "prompt",
+      title: "Book Appointment",
+      message: "Enter reason for appointment:",
+      inputPlaceholder: "e.g., Regular checkup, Consultation...",
+      onConfirm: async () => {
+        if (!promptInput.trim()) return;
+        try {
+          await bookAppointment({ slot_id: slotId, reason: promptInput });
+          setMessage("Appointment booked successfully!");
+          setAvailableSlots([]);
+          setSelectedDoctorId(null);
+          loadAppointments();
+          setPopup({ ...popup, isOpen: false });
+        } catch (_err: any) {
+          setError("Failed to book appointment");
+          setPopup({ ...popup, isOpen: false });
+        }
+      }
+    });
   };
 
-  const handleCancelAppointment = async (id: number) => {
-    if (!confirm("Cancel this appointment?")) return;
-    const reason = prompt("Enter cancellation reason:");
-    if (!reason) return;
-
-    try {
-      await cancelAppointment(id, reason);
-      setMessage("Appointment cancelled");
-      loadAppointments();
-    } catch (_err: any) {
-      setError("Failed to cancel appointment");
-    }
+  const handleCancelAppointment = (id: number) => {
+    setPopup({
+      isOpen: true,
+      type: "confirm",
+      title: "Cancel Appointment",
+      message: "Are you sure you want to cancel this appointment?",
+      onConfirm: () => {
+        setPopup({
+          isOpen: true,
+          type: "prompt",
+          title: "Cancellation Reason",
+          message: "Please enter the reason for cancellation:",
+          inputPlaceholder: "Enter cancellation reason...",
+          onConfirm: async () => {
+            if (!promptInput.trim()) return;
+            try {
+              await cancelAppointment(id, promptInput);
+              setMessage("Appointment cancelled");
+              loadAppointments();
+              setPopup({ ...popup, isOpen: false });
+            } catch (_err: any) {
+              setError("Failed to cancel appointment");
+              setPopup({ ...popup, isOpen: false });
+            }
+          }
+        });
+      }
+    });
   };
 
   const handleLogout = () => {
-    if (confirm("Logout?")) {
-      logout();
-      navigate("/login");
-    }
+    setPopup({
+      isOpen: true,
+      type: "confirm",
+      title: "Logout",
+      message: "Are you sure you want to logout?",
+      onConfirm: () => {
+        logout();
+        navigate("/login");
+      }
+    });
+  };
+
+  const buttonStyle = {
+    padding: "12px 24px",
+    fontSize: "16px",
+    fontWeight: "600",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+  };
+
+  const primaryButton = {
+    ...buttonStyle,
+    background: "#007bff",
+    color: "white"
+  };
+
+  const successButton = {
+    ...buttonStyle,
+    background: "#28a745",
+    color: "white"
+  };
+
+  const dangerButton = {
+    ...buttonStyle,
+    background: "#dc3545",
+    color: "white"
+  };
+
+  const inputStyle = {
+    padding: "12px 16px",
+    fontSize: "16px",
+    border: "2px solid #e0e0e0",
+    borderRadius: "8px",
+    width: "100%",
+    transition: "border-color 0.3s ease"
   };
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "20px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Patient Dashboard</h1>
-          <p style={{ margin: "5px 0 0 0", color: "#666" }}>Welcome, {user?.full_name || user?.email}</p>
+    <div style={{ 
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+      padding: "20px",
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+    }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          marginBottom: "30px",
+          padding: "24px 30px",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          borderRadius: "16px",
+          color: "white",
+          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.3)"
+        }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "32px", fontWeight: "700" }}>🏥 Patient Dashboard</h1>
+            <p style={{ margin: "10px 0 0 0", opacity: 0.95, fontSize: "16px" }}>
+              Welcome back, <strong>{user?.full_name || user?.email}</strong>
+            </p>
+          </div>
+          <button 
+            onClick={handleLogout} 
+            title="Logout"
+            style={{
+              background: "rgba(255,255,255,0.25)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.5)",
+              width: "50px",
+              height: "50px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "11px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.4)";
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+            }}
+          >
+            Logout
+          </button>
         </div>
-        <button onClick={handleLogout} style={{ padding: "10px 20px", cursor: "pointer" }}>
-          Logout
-        </button>
-      </div>
 
       {/* Tabs */}
-      <div style={{ marginBottom: "20px", borderBottom: "2px solid #ddd" }}>
+      <div style={{ 
+        marginBottom: "30px", 
+        background: "white",
+        borderRadius: "16px",
+        padding: "8px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        display: "flex",
+        gap: "8px"
+      }}>
         <button
           onClick={() => setActiveTab("book")}
           style={{
-            padding: "10px 20px",
+            flex: 1,
+            padding: "10px 14px",
             border: "none",
-            background: "none",
+            background: activeTab === "book" 
+              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+              : "transparent",
             cursor: "pointer",
-            borderBottom: activeTab === "book" ? "3px solid #007bff" : "none",
-            fontWeight: activeTab === "book" ? "bold" : "normal"
+            borderRadius: "12px",
+            fontWeight: activeTab === "book" ? "700" : "500",
+            color: activeTab === "book" ? "white" : "#666",
+            fontSize: "16px",
+            transition: "all 0.3s ease",
+            boxShadow: activeTab === "book" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
+          }}
+          onMouseOver={(e) => {
+            if (activeTab !== "book") {
+              e.currentTarget.style.background = "#f8f9fa";
+              e.currentTarget.style.color = "#333";
+            }
+          }}
+          onMouseOut={(e) => {
+            if (activeTab !== "book") {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#666";
+            }
           }}
         >
-          Book Appointment
+          📅 Book Appointment
         </button>
         <button
           onClick={() => setActiveTab("appointments")}
           style={{
-            padding: "10px 20px",
+            flex: 1,
+            padding: "16px 24px",
             border: "none",
-            background: "none",
+            background: activeTab === "appointments" 
+              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+              : "transparent",
             cursor: "pointer",
-            borderBottom: activeTab === "appointments" ? "3px solid #007bff" : "none",
-            fontWeight: activeTab === "appointments" ? "bold" : "normal"
+            borderRadius: "12px",
+            fontWeight: activeTab === "appointments" ? "700" : "500",
+            color: activeTab === "appointments" ? "white" : "#666",
+            fontSize: "16px",
+            transition: "all 0.3s ease",
+            boxShadow: activeTab === "appointments" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
+          }}
+          onMouseOver={(e) => {
+            if (activeTab !== "appointments") {
+              e.currentTarget.style.background = "#f8f9fa";
+              e.currentTarget.style.color = "#333";
+            }
+          }}
+          onMouseOut={(e) => {
+            if (activeTab !== "appointments") {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#666";
+            }
           }}
         >
-          My Appointments
+          📋 My Appointments
         </button>
       </div>
 
       {/* Messages */}
-      {message && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px", borderRadius: "5px" }}>{message}</div>}
-      {error && <div style={{ padding: "10px", background: "#f8d7da", color: "#721c24", marginBottom: "15px", borderRadius: "5px" }}>{error}</div>}
+      {message && (
+        <div style={{ 
+          padding: "16px 20px", 
+          background: "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)", 
+          color: "#155724", 
+          marginBottom: "20px", 
+          borderRadius: "12px",
+          border: "2px solid #c3e6cb",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          boxShadow: "0 4px 12px rgba(21, 87, 36, 0.15)"
+        }}>
+          <span style={{ fontSize: "24px" }}>✅</span>
+          <p style={{ margin: 0, fontWeight: "600", fontSize: "16px" }}>{message}</p>
+        </div>
+      )}
+      {error && (
+        <div style={{ 
+          padding: "16px 20px", 
+          background: "linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)", 
+          color: "#721c24", 
+          marginBottom: "20px", 
+          borderRadius: "12px",
+          border: "2px solid #f5c6cb",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          boxShadow: "0 4px 12px rgba(114, 28, 36, 0.15)"
+        }}>
+          <span style={{ fontSize: "24px" }}>❌</span>
+          <p style={{ margin: 0, fontWeight: "600", fontSize: "16px" }}>{error}</p>
+        </div>
+      )}
 
       {/* Book Appointment Tab */}
       {activeTab === "book" && (
-        <div>
+        <div style={{ background: "transparent" }}>
           {/* Search Section */}
-          <div style={{ marginBottom: "30px" }}>
-            <h3>Search for Doctors</h3>
-            <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-              <input
-                placeholder="Enter specialization (e.g., Cardiology)"
-                value={searchSpecialization}
-                onChange={(e) => setSearchSpecialization(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearchDoctors()}
-                style={{ flex: 1, padding: "10px", fontSize: "16px" }}
-              />
-              <button onClick={handleSearchDoctors} disabled={loading} style={{ padding: "10px 20px", cursor: "pointer" }}>
-                {loading ? "Searching..." : "Search"}
+          <div style={{ 
+            marginBottom: "30px",
+            padding: "30px",
+            background: "white",
+            borderRadius: "16px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.08)"
+          }}>
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "12px", 
+              marginBottom: "24px" 
+            }}>
+              <div style={{ 
+                width: "48px", 
+                height: "48px", 
+                borderRadius: "12px", 
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "24px"
+              }}>
+                🔍
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: "#333", fontSize: "24px", fontWeight: "700" }}>
+                  Search for Doctors
+                </h3>
+                <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "14px" }}>
+                  Find doctors by specialization
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ 
+              display: "flex", 
+              gap: "12px", 
+              marginBottom: "20px",
+              flexWrap: "wrap"
+            }}>
+              <div style={{ 
+                flex: 1, 
+                minWidth: "300px",
+                position: "relative"
+              }}>
+                <input
+                  placeholder="🔎 Search by specialization (e.g., Cardiology, General Medicine, Pediatrics)"
+                  value={searchSpecialization}
+                  onChange={(e) => setSearchSpecialization(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearchDoctors()}
+                  style={{
+                    ...inputStyle,
+                    paddingLeft: "48px",
+                    fontSize: "16px",
+                    height: "52px",
+                    border: "2px solid #e0e0e0",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#667eea";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+                  }}
+                />
+                <span style={{
+                  position: "absolute",
+                  left: "16px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: "20px"
+                }}>🔎</span>
+              </div>
+              <button 
+                onClick={handleSearchDoctors} 
+                disabled={loading}
+                style={{
+                  ...primaryButton,
+                  minWidth: "140px",
+                  height: "52px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px"
+                }}
+                onMouseOver={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                  }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span>⏳</span> Searching...
+                  </>
+                ) : (
+                  <>
+                    <span>🔍</span> Search
+                  </>
+                )}
               </button>
               {searchSpecialization && (
-                <button onClick={() => { setSearchSpecialization(""); loadDoctors(); }} style={{ padding: "10px 20px", cursor: "pointer" }}>
-                  Clear
+                <button 
+                  onClick={() => { setSearchSpecialization(""); loadDoctors(); }} 
+                  style={{
+                    ...buttonStyle,
+                    background: "#6c757d",
+                    color: "white",
+                    height: "52px",
+                    minWidth: "100px",
+                    fontSize: "16px",
+                    fontWeight: "600"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = "#5a6268";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = "#6c757d";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  ✕ Clear
                 </button>
               )}
             </div>
 
             {/* Doctors List */}
             {loading ? (
-              <p>Loading doctors...</p>
+              <div style={{ 
+                textAlign: "center", 
+                padding: "60px 40px", 
+                color: "#666",
+                background: "#f8f9fa",
+                borderRadius: "12px"
+              }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>⏳</div>
+                <p style={{ fontSize: "18px", fontWeight: "600" }}>Loading doctors...</p>
+                <p style={{ fontSize: "14px", marginTop: "8px", opacity: 0.7 }}>Please wait</p>
+              </div>
             ) : doctors.length === 0 ? (
-              <p>No doctors found. Try a different search.</p>
+              <div style={{ 
+                textAlign: "center", 
+                padding: "60px 40px", 
+                color: "#666",
+                background: "#f8f9fa",
+                borderRadius: "12px"
+              }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>👨‍⚕️</div>
+                <p style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
+                  No doctors found
+                </p>
+                <p style={{ fontSize: "14px", opacity: 0.7 }}>
+                  Try a different search term or clear the search to see all doctors
+                </p>
+              </div>
             ) : (
               <div>
-                <p><strong>{doctors.length} doctor(s) found</strong></p>
-                {doctors.map((doctor) => (
-                  <div
-                    key={doctor.id}
-                    onClick={() => setSelectedDoctorId(doctor.id)}
-                    style={{
-                      padding: "15px",
-                      marginBottom: "10px",
-                      border: selectedDoctorId === doctor.id ? "2px solid #007bff" : "1px solid #ddd",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                      background: selectedDoctorId === doctor.id ? "#e7f3ff" : "white"
-                    }}
-                  >
-                    <h4 style={{ margin: "0 0 10px 0" }}>Dr. {doctor.full_name}</h4>
-                    <p style={{ margin: "5px 0" }}><strong>Specialization:</strong> {doctor.specialization}</p>
-                    {doctor.qualification && <p style={{ margin: "5px 0" }}><strong>Qualification:</strong> {doctor.qualification}</p>}
-                    {doctor.experience_years && <p style={{ margin: "5px 0" }}><strong>Experience:</strong> {doctor.experience_years} years</p>}
-                    {doctor.consultation_fee && <p style={{ margin: "5px 0" }}><strong>Fee:</strong> ${doctor.consultation_fee}</p>}
-                  </div>
-                ))}
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "12px",
+                  marginBottom: "20px",
+                  padding: "16px",
+                  background: "linear-gradient(135deg, #e7f3ff 0%, #d1ecf1 100%)",
+                  borderRadius: "12px"
+                }}>
+                  <span style={{ fontSize: "24px" }}>📋</span>
+                  <p style={{ margin: 0, fontWeight: "700", color: "#333", fontSize: "18px" }}>
+                    {doctors.length} {doctors.length === 1 ? 'Doctor' : 'Doctors'} Found
+                  </p>
+                </div>
+                <div style={{ display: "grid", gap: "16px" }}>
+                  {doctors.map((doctor) => (
+                    <div
+                      key={doctor.id}
+                      onClick={() => setSelectedDoctorId(doctor.id)}
+                      style={{
+                        padding: "24px",
+                        border: selectedDoctorId === doctor.id 
+                          ? "3px solid #667eea" 
+                          : "2px solid #e0e0e0",
+                        borderRadius: "16px",
+                        cursor: "pointer",
+                        background: selectedDoctorId === doctor.id 
+                          ? "linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%)" 
+                          : "white",
+                        transition: "all 0.3s ease",
+                        boxShadow: selectedDoctorId === doctor.id 
+                          ? "0 8px 24px rgba(102, 126, 234, 0.25)" 
+                          : "0 2px 8px rgba(0,0,0,0.08)"
+                      }}
+                      onMouseOver={(e) => {
+                        if (selectedDoctorId !== doctor.id) {
+                          e.currentTarget.style.borderColor = "#667eea";
+                          e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.12)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (selectedDoctorId !== doctor.id) {
+                          e.currentTarget.style.borderColor = "#e0e0e0";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "start", gap: "16px" }}>
+                        <div style={{
+                          width: "64px",
+                          height: "64px",
+                          borderRadius: "16px",
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "32px",
+                          flexShrink: 0
+                        }}>
+                          👨‍⚕️
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ 
+                            margin: "0 0 12px 0", 
+                            color: "#667eea", 
+                            fontSize: "22px",
+                            fontWeight: "700"
+                          }}>
+                            Dr. {doctor.full_name}
+                          </h4>
+                          <div style={{ 
+                            display: "grid", 
+                            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+                            gap: "12px" 
+                          }}>
+                            <div style={{ 
+                              padding: "8px 12px",
+                              background: "#f8f9fa",
+                              borderRadius: "8px"
+                            }}>
+                              <strong style={{ color: "#666", fontSize: "12px" }}>SPECIALIZATION</strong>
+                              <p style={{ margin: "4px 0 0 0", color: "#333", fontWeight: "600" }}>
+                                {doctor.specialization}
+                              </p>
+                            </div>
+                            {doctor.qualification && (
+                              <div style={{ 
+                                padding: "8px 12px",
+                                background: "#f8f9fa",
+                                borderRadius: "8px"
+                              }}>
+                                <strong style={{ color: "#666", fontSize: "12px" }}>QUALIFICATION</strong>
+                                <p style={{ margin: "4px 0 0 0", color: "#333", fontWeight: "600" }}>
+                                  {doctor.qualification}
+                                </p>
+                              </div>
+                            )}
+                            {doctor.experience_years && (
+                              <div style={{ 
+                                padding: "8px 12px",
+                                background: "#f8f9fa",
+                                borderRadius: "8px"
+                              }}>
+                                <strong style={{ color: "#666", fontSize: "12px" }}>EXPERIENCE</strong>
+                                <p style={{ margin: "4px 0 0 0", color: "#333", fontWeight: "600" }}>
+                                  {doctor.experience_years} years
+                                </p>
+                              </div>
+                            )}
+                            {doctor.consultation_fee && (
+                              <div style={{ 
+                                padding: "8px 12px",
+                                background: "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)",
+                                borderRadius: "8px"
+                              }}>
+                                <strong style={{ color: "#155724", fontSize: "12px" }}>CONSULTATION FEE</strong>
+                                <p style={{ margin: "4px 0 0 0", color: "#155724", fontWeight: "700", fontSize: "18px" }}>
+                                  ${doctor.consultation_fee}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {selectedDoctorId === doctor.id && (
+                          <div style={{
+                            padding: "8px 16px",
+                            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                            color: "white",
+                            borderRadius: "8px",
+                            fontWeight: "700",
+                            fontSize: "14px"
+                          }}>
+                            ✓ Selected
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {/* Slots Section */}
           {selectedDoctorId && (
-            <div>
-              <h3>Select Date & Time</h3>
-              <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+            <div style={{
+              padding: "30px",
+              background: "white",
+              borderRadius: "16px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              marginTop: "24px"
+            }}>
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "12px", 
+                marginBottom: "24px" 
+              }}>
+                <div style={{ 
+                  width: "48px", 
+                  height: "48px", 
+                  borderRadius: "12px", 
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "24px"
+                }}>
+                  📅
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, color: "#333", fontSize: "24px", fontWeight: "700" }}>
+                    Select Date & Time
+                  </h3>
+                  <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "14px" }}>
+                    Choose your preferred appointment date
+                  </p>
+                </div>
+              </div>
+              <div style={{ 
+                display: "flex", 
+                gap: "12px", 
+                marginBottom: "20px", 
+                flexWrap: "wrap",
+                alignItems: "center"
+              }}>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  style={{ padding: "10px", fontSize: "16px" }}
+                  style={{
+                    ...inputStyle,
+                    flex: "1",
+                    minWidth: "250px",
+                    height: "52px",
+                    fontSize: "16px",
+                    border: "2px solid #e0e0e0",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#667eea";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+                  }}
                 />
-                <button onClick={loadSlots} style={{ padding: "10px 20px", cursor: "pointer" }}>
-                  Find Slots
+                <button 
+                  onClick={loadSlots} 
+                  style={{
+                    ...primaryButton,
+                    minWidth: "160px",
+                    height: "52px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                  }}
+                >
+                  🔍 Find Slots
                 </button>
               </div>
 
               {availableSlots.length > 0 ? (
                 <div>
-                  <p><strong>{availableSlots.length} slot(s) available</strong></p>
+                  <p style={{ marginBottom: "15px", fontWeight: "600", color: "#333" }}>
+                    ✅ {availableSlots.length} slot(s) available
+                  </p>
                   {availableSlots.map((slot) => (
                     <div
                       key={slot.id}
                       style={{
-                        padding: "15px",
-                        marginBottom: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
+                        padding: "20px",
+                        marginBottom: "15px",
+                        border: "2px solid #e0e0e0",
+                        borderRadius: "12px",
                         display: "flex",
                         justifyContent: "space-between",
-                        alignItems: "center"
+                        alignItems: "center",
+                        background: "white",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
                       }}
                     >
                       <div>
-                        <p style={{ margin: "5px 0" }}><strong>{new Date(slot.slot_date).toLocaleDateString()}</strong></p>
-                        <p style={{ margin: "5px 0" }}>{slot.start_time} - {slot.end_time}</p>
+                        <p style={{ margin: "5px 0", fontSize: "18px", fontWeight: "600" }}>
+                          📅 {new Date(slot.slot_date).toLocaleDateString()}
+                        </p>
+                        <p style={{ margin: "5px 0", fontSize: "16px" }}>
+                          ⏰ {slot.start_time} - {slot.end_time}
+                        </p>
                         <p style={{ margin: "5px 0", fontSize: "14px", color: "#666" }}>
-                          {slot.max_bookings - slot.current_bookings} spot(s) left
+                          👥 {slot.max_bookings - slot.current_bookings} spot(s) left
                         </p>
                       </div>
                       <button
                         onClick={() => handleBookSlot(slot.id)}
-                        style={{ padding: "10px 20px", background: "#28a745", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        style={{
+                          ...successButton,
+                          minWidth: "120px"
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = "#218838"}
+                        onMouseOut={(e) => e.currentTarget.style.background = "#28a745"}
                       >
-                        Book
+                        ✅ Book Now
                       </button>
                     </div>
                   ))}
                 </div>
               ) : selectedDate ? (
-                <p>No slots available for this date</p>
+                <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                  <p>❌ No slots available for this date</p>
+                </div>
               ) : null}
             </div>
           )}
@@ -258,54 +826,186 @@ const UserDashboard = () => {
 
       {/* Appointments Tab */}
       {activeTab === "appointments" && (
-        <div>
-          <h3>My Appointments</h3>
-          {appointments.length === 0 ? (
-            <p>No appointments yet. Book your first appointment!</p>
-          ) : (
+        <div style={{
+          padding: "30px",
+          background: "white",
+          borderRadius: "16px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)"
+        }}>
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "12px", 
+            marginBottom: "24px" 
+          }}>
+            <div style={{ 
+              width: "48px", 
+              height: "48px", 
+              borderRadius: "12px", 
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "24px"
+            }}>
+              📋
+            </div>
             <div>
+              <h3 style={{ margin: 0, color: "#333", fontSize: "24px", fontWeight: "700" }}>
+                My Appointments
+              </h3>
+              <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "14px" }}>
+                View and manage your appointments
+              </p>
+            </div>
+          </div>
+          {appointments.length === 0 ? (
+            <div style={{ 
+              textAlign: "center", 
+              padding: "80px 20px",
+              background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+              borderRadius: "16px",
+              color: "#666"
+            }}>
+              <div style={{ fontSize: "64px", marginBottom: "20px" }}>📅</div>
+              <p style={{ fontSize: "20px", fontWeight: "700", marginBottom: "12px", color: "#333" }}>
+                No appointments yet
+              </p>
+              <p style={{ fontSize: "16px", opacity: 0.8 }}>
+                Book your first appointment to get started!
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "16px" }}>
               {appointments.map((apt) => (
                 <div
                   key={apt.id}
                   style={{
-                    padding: "15px",
-                    marginBottom: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px"
+                    padding: "24px",
+                    border: "2px solid #e0e0e0",
+                    borderRadius: "16px",
+                    background: "white",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    transition: "all 0.3s ease"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.12)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                    <div>
-                      <h4 style={{ margin: "0 0 10px 0" }}>Dr. {apt.doctor_name}</h4>
-                      <p style={{ margin: "5px 0" }}><strong>Specialization:</strong> {apt.specialization}</p>
-                      <p style={{ margin: "5px 0" }}><strong>Date:</strong> {new Date(apt.appointment_date).toLocaleDateString()}</p>
-                      <p style={{ margin: "5px 0" }}><strong>Time:</strong> {apt.start_time} - {apt.end_time}</p>
-                      <p style={{ margin: "5px 0" }}>
-                        <strong>Status:</strong>{" "}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "20px" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{
+                          width: "56px",
+                          height: "56px",
+                          borderRadius: "12px",
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "28px"
+                        }}>
+                          👨‍⚕️
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, color: "#667eea", fontSize: "22px", fontWeight: "700" }}>
+                            Dr. {apt.doctor_name}
+                          </h4>
+                          <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "14px" }}>
+                            {apt.specialization}
+                          </p>
+                        </div>
+                      </div>
+                      <div style={{ 
+                        display: "grid", 
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+                        gap: "12px",
+                        marginBottom: "16px"
+                      }}>
+                        <div style={{ 
+                          padding: "12px 16px",
+                          background: "#f8f9fa",
+                          borderRadius: "10px"
+                        }}>
+                          <strong style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "4px" }}>
+                            📅 DATE
+                          </strong>
+                          <p style={{ margin: 0, color: "#333", fontWeight: "600" }}>
+                            {new Date(apt.appointment_date).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                        <div style={{ 
+                          padding: "12px 16px",
+                          background: "#f8f9fa",
+                          borderRadius: "10px"
+                        }}>
+                          <strong style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "4px" }}>
+                            ⏰ TIME
+                          </strong>
+                          <p style={{ margin: 0, color: "#333", fontWeight: "600" }}>
+                            {apt.start_time} - {apt.end_time}
+                          </p>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <strong style={{ color: "#666", fontSize: "14px" }}>Status:</strong>
                         <span
                           style={{
-                            padding: "3px 8px",
-                            borderRadius: "3px",
+                            padding: "8px 16px",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            letterSpacing: "0.5px",
                             background:
-                              apt.status === "approved" ? "#d4edda" :
-                              apt.status === "pending" ? "#fff3cd" :
-                              apt.status === "completed" ? "#d1ecf1" : "#f8d7da",
+                              apt.status === "approved" ? "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)" :
+                              apt.status === "pending" ? "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)" :
+                              apt.status === "completed" ? "linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)" : 
+                              "linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)",
                             color:
                               apt.status === "approved" ? "#155724" :
                               apt.status === "pending" ? "#856404" :
-                              apt.status === "completed" ? "#0c5460" : "#721c24"
+                              apt.status === "completed" ? "#0c5460" : "#721c24",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
                           }}
                         >
-                          {apt.status}
+                          {apt.status.toUpperCase()}
                         </span>
-                      </p>
+                      </div>
                     </div>
                     {apt.status !== "cancelled" && apt.status !== "completed" && (
                       <button
                         onClick={() => handleCancelAppointment(apt.id)}
-                        style={{ padding: "8px 16px", background: "#dc3545", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        style={{
+                          ...dangerButton,
+                          minWidth: "120px",
+                          height: "48px",
+                          fontSize: "15px",
+                          fontWeight: "600",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px"
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = "#c82333";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = "#dc3545";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }}
                       >
-                        Cancel
+                        ❌ Cancel
                       </button>
                     )}
                   </div>
@@ -315,6 +1015,25 @@ const UserDashboard = () => {
           )}
         </div>
       )}
+      </div>
+
+      {/* Popup Component */}
+      <Popup
+        isOpen={popup.isOpen}
+        onClose={() => {
+          setPopup({ ...popup, isOpen: false });
+          setPromptInput("");
+        }}
+        onConfirm={popup.onConfirm}
+        title={popup.title}
+        message={popup.message}
+        type={popup.type}
+        inputPlaceholder={popup.inputPlaceholder}
+        inputValue={promptInput}
+        onInputChange={setPromptInput}
+        confirmText={popup.type === "confirm" ? "Yes" : "OK"}
+        cancelText="Cancel"
+      />
     </div>
   );
 };

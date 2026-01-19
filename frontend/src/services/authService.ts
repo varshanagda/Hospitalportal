@@ -19,8 +19,13 @@ export interface RegisterData {
 }
 
 export const register = async (data: RegisterData) => {
-  const res = await axios.post(`${API_URL}/register`, data);
-  return res.data;
+  try {
+    const res = await axios.post(`${API_URL}/register`, data);
+    return res.data;
+  } catch (error: any) {
+    console.error("Registration error:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const login = async (email: string, password: string) => {

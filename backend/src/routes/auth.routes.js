@@ -12,6 +12,8 @@ const router = express.Router();
  * body: { email, password, role, full_name, phone }
  */
 router.post("/register", async (req, res) => {
+  const client = await pool.connect();
+  
   try {
     const { email, password, role = 'user', full_name, phone } = req.body;
 
@@ -26,7 +28,7 @@ router.post("/register", async (req, res) => {
     }
 
     // 2. Check if user exists
-    const userExists = await pool.query(
+    const userExists = await client.query(
       "SELECT id FROM users WHERE email = $1",
       [email]
     );
@@ -35,14 +37,30 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
+    await client.query('BEGIN');
+
     // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 4. Save user
-    const result = await pool.query(
+    const result = await client.query(
       "INSERT INTO users (email, password, role, full_name, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, role, full_name",
       [email, hashedPassword, role, full_name, phone]
     );
+
+    const userId = result.rows[0].id;
+
+    // 5. If role is doctor, automatically create a basic doctor profile
+    // Auto-approve self-registered doctors so they can use doctor features immediately
+    if (role === 'doctor') {
+      await client.query(
+        `INSERT INTO doctors (user_id, specialization, is_approved) 
+         VALUES ($1, $2, true)`,
+        [userId, 'General Practice'] // Default specialization, can be updated later
+      );
+    }
+
+    await client.query('COMMIT');
 
     return res.status(201).json({ 
       message: "User registered successfully",
@@ -50,8 +68,16 @@ router.post("/register", async (req, res) => {
     });
 
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error("Register error:", error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("Error stack:", error.stack);
+    return res.status(500).json({ 
+      message: "Server error",
+      error: error.message,
+      details: error.stack
+    });
+  } finally {
+    client.release();
   }
 });
 
