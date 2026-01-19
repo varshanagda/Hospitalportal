@@ -134,7 +134,7 @@ jobs:
           path: backend/coverage/
 
       - name: Run SonarQube Scanner for Backend
-        + uses: sonarsource/sonarqube-scan-action@v2
+        uses: sonarsource/sonarqube-scan-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
@@ -154,7 +154,7 @@ jobs:
 
       - name: SonarQube Quality Gate Check
         id: sonarqube-quality-gate-check
-        + uses: sonarsource/sonarqube-quality-gate-action@v1
+        uses: sonarsource/sonarqube-quality-gate-action@v1
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
@@ -200,7 +200,7 @@ jobs:
         if: always()
 
       - name: Run SonarQube Scanner for Frontend
-        uses: sonarsource/sonarqube-scan-action@a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t
+        uses: sonarsource/sonarqube-scan-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
