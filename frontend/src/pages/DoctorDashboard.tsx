@@ -129,7 +129,7 @@ const DoctorDashboard = () => {
     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
   };
 
-  const handleButtonHoverWithColor = (hoverColor: string, defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleButtonHoverWithColor = (hoverColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.style.background = hoverColor;
   };
 
@@ -357,7 +357,7 @@ const DoctorDashboard = () => {
               <button 
                 type="submit" 
                 style={primaryButton}
-                onMouseOver={handleButtonHoverWithColor("#0056b3", "#007bff")}
+                onMouseOver={handleButtonHoverWithColor("#0056b3")}
                 onMouseOut={handleButtonHoverOutWithColor("#007bff")}
               >
                 ➕ Create Slot
@@ -489,7 +489,7 @@ const DoctorDashboard = () => {
                       <button
                         onClick={() => handleUpdateStatus(apt.id, "approved")}
                         style={successButton}
-                        onMouseOver={handleButtonHoverWithColor("#218838", "#28a745")}
+                        onMouseOver={handleButtonHoverWithColor("#218838")}
                         onMouseOut={handleButtonHoverOutWithColor("#28a745")}
                       >
                         ✅ Approve
@@ -497,7 +497,7 @@ const DoctorDashboard = () => {
                       <button
                         onClick={() => handleUpdateStatus(apt.id, "cancelled")}
                         style={dangerButton}
-                        onMouseOver={handleButtonHoverWithColor("#c82333", "#dc3545")}
+                        onMouseOver={handleButtonHoverWithColor("#c82333")}
                         onMouseOut={handleButtonHoverOutWithColor("#dc3545")}
                       >
                         ❌ Reject
@@ -513,7 +513,7 @@ const DoctorDashboard = () => {
                           background: "#17a2b8",
                           color: "white"
                         }}
-                        onMouseOver={handleButtonHoverWithColor("#138496", "#17a2b8")}
+                        onMouseOver={handleButtonHoverWithColor("#138496")}
                         onMouseOut={handleButtonHoverOutWithColor("#17a2b8")}
                       >
                         ✅ Mark Completed

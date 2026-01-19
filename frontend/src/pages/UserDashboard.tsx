@@ -164,7 +164,7 @@ const UserDashboard = () => {
     }
   };
 
-  const handleButtonHoverWithColor = (hoverColor: string, defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleButtonHoverWithColor = (hoverColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.style.background = hoverColor;
     e.currentTarget.style.transform = "translateY(-2px)";
   };
@@ -463,7 +463,7 @@ const UserDashboard = () => {
                     fontSize: "16px",
                     fontWeight: "600"
                   }}
-                  onMouseOver={handleButtonHoverWithColor("#5a6268", "#6c757d")}
+                  onMouseOver={handleButtonHoverWithColor("#5a6268")}
                   onMouseOut={handleButtonHoverOutWithColor("#6c757d")}
                 >
                   ✕ Clear
