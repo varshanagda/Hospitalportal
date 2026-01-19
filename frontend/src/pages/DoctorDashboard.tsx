@@ -116,6 +116,39 @@ const DoctorDashboard = () => {
     });
   };
 
+  // Reusable mouse event handlers to reduce duplication
+  const handleLogoutButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(255,255,255,0.4)";
+    e.currentTarget.style.transform = "scale(1.1)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+  };
+
+  const handleLogoutButtonHoverOut = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+  };
+
+  const handleButtonHoverWithColor = (hoverColor: string, defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = hoverColor;
+  };
+
+  const handleButtonHoverOutWithColor = (defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = defaultColor;
+  };
+
+  const handleDeleteButtonHover = (canDelete: boolean) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (canDelete) {
+      e.currentTarget.style.background = "#c82333";
+    }
+  };
+
+  const handleDeleteButtonHoverOut = (canDelete: boolean) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (canDelete) {
+      e.currentTarget.style.background = "#dc3545";
+    }
+  };
+
   const buttonStyle = {
     padding: "12px 24px",
     fontSize: "16px",
@@ -190,16 +223,8 @@ const DoctorDashboard = () => {
             backdropFilter: "blur(10px)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
           }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.4)";
-            e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-          }}
+          onMouseOver={handleLogoutButtonHover}
+          onMouseOut={handleLogoutButtonHoverOut}
         >
           Logout
         </button>
@@ -332,8 +357,8 @@ const DoctorDashboard = () => {
               <button 
                 type="submit" 
                 style={primaryButton}
-                onMouseOver={(e) => e.currentTarget.style.background = "#0056b3"}
-                onMouseOut={(e) => e.currentTarget.style.background = "#007bff"}
+                onMouseOver={handleButtonHoverWithColor("#0056b3", "#007bff")}
+                onMouseOut={handleButtonHoverOutWithColor("#007bff")}
               >
                 ➕ Create Slot
               </button>
@@ -389,16 +414,8 @@ const DoctorDashboard = () => {
                       cursor: slot.current_bookings > 0 ? "not-allowed" : "pointer",
                       opacity: slot.current_bookings > 0 ? 0.6 : 1
                     }}
-                    onMouseOver={(e) => {
-                      if (slot.current_bookings === 0) {
-                        e.currentTarget.style.background = "#c82333";
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (slot.current_bookings === 0) {
-                        e.currentTarget.style.background = "#dc3545";
-                      }
-                    }}
+                    onMouseOver={handleDeleteButtonHover(slot.current_bookings === 0)}
+                    onMouseOut={handleDeleteButtonHoverOut(slot.current_bookings === 0)}
                   >
                     ❌ Delete
                   </button>
@@ -472,16 +489,16 @@ const DoctorDashboard = () => {
                       <button
                         onClick={() => handleUpdateStatus(apt.id, "approved")}
                         style={successButton}
-                        onMouseOver={(e) => e.currentTarget.style.background = "#218838"}
-                        onMouseOut={(e) => e.currentTarget.style.background = "#28a745"}
+                        onMouseOver={handleButtonHoverWithColor("#218838", "#28a745")}
+                        onMouseOut={handleButtonHoverOutWithColor("#28a745")}
                       >
                         ✅ Approve
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(apt.id, "cancelled")}
                         style={dangerButton}
-                        onMouseOver={(e) => e.currentTarget.style.background = "#c82333"}
-                        onMouseOut={(e) => e.currentTarget.style.background = "#dc3545"}
+                        onMouseOver={handleButtonHoverWithColor("#c82333", "#dc3545")}
+                        onMouseOut={handleButtonHoverOutWithColor("#dc3545")}
                       >
                         ❌ Reject
                       </button>
@@ -496,8 +513,8 @@ const DoctorDashboard = () => {
                           background: "#17a2b8",
                           color: "white"
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = "#138496"}
-                        onMouseOut={(e) => e.currentTarget.style.background = "#17a2b8"}
+                        onMouseOver={handleButtonHoverWithColor("#138496", "#17a2b8")}
+                        onMouseOut={handleButtonHoverOutWithColor("#17a2b8")}
                       >
                         ✅ Mark Completed
                       </button>

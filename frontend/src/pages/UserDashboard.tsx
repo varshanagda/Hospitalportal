@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { logout, getCurrentUser } from "../services/authService";
+import { getCurrentUser } from "../services/authService";
 import { getAllDoctors, type Doctor } from "../services/doctorService";
 import { getAvailableSlots, type Slot } from "../services/slotService";
 import { getUserAppointments, bookAppointment, cancelAppointment, type Appointment } from "../services/appointmentService";
 import Popup from "../components/Popup";
+import { useLogoutHandler } from "../hooks/useLogout";
+import { DashboardMessage } from "../components/shared/DashboardMessage";
+import { StatusBadge } from "../components/shared/StatusBadge";
 
 const UserDashboard = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -31,8 +33,8 @@ const UserDashboard = () => {
     title: ""
   });
   const [promptInput, setPromptInput] = useState("");
-  const navigate = useNavigate();
   const user = getCurrentUser();
+  const handleLogout = useLogoutHandler(setPopup);
 
   useEffect(() => {
     loadDoctors();
@@ -129,19 +131,6 @@ const UserDashboard = () => {
             }
           }
         });
-      }
-    });
-  };
-
-  const handleLogout = () => {
-    setPopup({
-      isOpen: true,
-      type: "confirm",
-      title: "Logout",
-      message: "Are you sure you want to logout?",
-      onConfirm: () => {
-        logout();
-        navigate("/login");
       }
     });
   };
@@ -351,40 +340,7 @@ const UserDashboard = () => {
       </div>
 
       {/* Messages */}
-      {message && (
-        <div style={{ 
-          padding: "16px 20px", 
-          background: "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)", 
-          color: "#155724", 
-          marginBottom: "20px", 
-          borderRadius: "12px",
-          border: "2px solid #c3e6cb",
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          boxShadow: "0 4px 12px rgba(21, 87, 36, 0.15)"
-        }}>
-          <span style={{ fontSize: "24px" }}>✅</span>
-          <p style={{ margin: 0, fontWeight: "600", fontSize: "16px" }}>{message}</p>
-        </div>
-      )}
-      {error && (
-        <div style={{ 
-          padding: "16px 20px", 
-          background: "linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)", 
-          color: "#721c24", 
-          marginBottom: "20px", 
-          borderRadius: "12px",
-          border: "2px solid #f5c6cb",
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          boxShadow: "0 4px 12px rgba(114, 28, 36, 0.15)"
-        }}>
-          <span style={{ fontSize: "24px" }}>❌</span>
-          <p style={{ margin: 0, fontWeight: "600", fontSize: "16px" }}>{error}</p>
-        </div>
-      )}
+      <DashboardMessage message={message} error={error} variant="detailed" />
 
       {/* Book Appointment Tab */}
       {activeTab === "book" && (
@@ -969,27 +925,7 @@ const UserDashboard = () => {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         <strong style={{ color: "#666", fontSize: "14px" }}>Status:</strong>
-                        <span
-                          style={{
-                            padding: "8px 16px",
-                            borderRadius: "8px",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            letterSpacing: "0.5px",
-                            background:
-                              apt.status === "approved" ? "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)" :
-                              apt.status === "pending" ? "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)" :
-                              apt.status === "completed" ? "linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)" : 
-                              "linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)",
-                            color:
-                              apt.status === "approved" ? "#155724" :
-                              apt.status === "pending" ? "#856404" :
-                              apt.status === "completed" ? "#0c5460" : "#721c24",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                          }}
-                        >
-                          {apt.status.toUpperCase()}
-                        </span>
+                        <StatusBadge status={apt.status} variant="gradient" />
                       </div>
                     </div>
                     {apt.status !== "cancelled" && apt.status !== "completed" && (

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { logout, getCurrentUser } from "../services/authService";
+import { getCurrentUser } from "../services/authService";
 import { getAllAppointments, updateAppointmentStatus, type Appointment } from "../services/appointmentService";
 import { getAllDoctors, createDoctor, type Doctor } from "../services/doctorService";
 import Popup from "../components/Popup";
+import { useLogoutHandler } from "../hooks/useLogout";
+import { DashboardMessage } from "../components/shared/DashboardMessage";
+import { StatusBadge } from "../components/shared/StatusBadge";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -35,8 +37,8 @@ const AdminDashboard = () => {
     consultation_fee: 0
   });
 
-  const navigate = useNavigate();
   const user = getCurrentUser();
+  const handleLogout = useLogoutHandler(setPopup);
 
   useEffect(() => {
     loadAppointments();
@@ -90,19 +92,6 @@ const AdminDashboard = () => {
     } catch (_err: any) {
       setError("Failed to create doctor");
     }
-  };
-
-  const handleLogout = () => {
-    setPopup({
-      isOpen: true,
-      type: "confirm",
-      title: "Logout",
-      message: "Are you sure you want to logout?",
-      onConfirm: () => {
-        logout();
-        navigate("/login");
-      }
-    });
   };
 
   // Reusable mouse event handlers to reduce duplication
@@ -182,8 +171,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Messages */}
-      {message && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px", borderRadius: "5px" }}>{message}</div>}
-      {error && <div style={{ padding: "10px", background: "#f8d7da", color: "#721c24", marginBottom: "15px", borderRadius: "5px" }}>{error}</div>}
+      <DashboardMessage message={message} error={error} variant="simple" />
 
       {/* Appointments Tab */}
       {activeTab === "appointments" && (
@@ -213,22 +201,7 @@ const AdminDashboard = () => {
                     <p style={{ margin: "5px 0" }}><strong>Reason:</strong> {apt.reason}</p>
                     <p style={{ margin: "5px 0" }}>
                       <strong>Status:</strong>{" "}
-                      <span
-                        style={{
-                          padding: "3px 8px",
-                          borderRadius: "3px",
-                          background:
-                            apt.status === "approved" ? "#d4edda" :
-                            apt.status === "pending" ? "#fff3cd" :
-                            apt.status === "completed" ? "#d1ecf1" : "#f8d7da",
-                          color:
-                            apt.status === "approved" ? "#155724" :
-                            apt.status === "pending" ? "#856404" :
-                            apt.status === "completed" ? "#0c5460" : "#721c24"
-                        }}
-                      >
-                        {apt.status}
-                      </span>
+                      <StatusBadge status={apt.status} variant="simple" />
                     </p>
                   </div>
                   {apt.status === "pending" && (
