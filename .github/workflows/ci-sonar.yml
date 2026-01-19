@@ -52,6 +52,7 @@ jobs:
       - name: Run backend tests with coverage
         working-directory: ./backend
         env:
+          NODE_ENV: test
           DB_HOST: localhost
           DB_USER: postgres
           DB_PASSWORD: postgres
