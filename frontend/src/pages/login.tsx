@@ -25,10 +25,15 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await login(email, password);
+      if (!response || !response.user) {
+        setMessage("Login failed. Invalid response from server.");
+        return;
+      }
+      
       setMessage("Login successful");
       
       // Redirect based on user role
-      const userRole = response.user?.role;
+      const userRole = response.user.role;
       if (userRole === "admin") {
         navigate("/admin");
       } else if (userRole === "doctor") {
@@ -36,8 +41,9 @@ const Login = () => {
       } else {
         navigate("/user");
       }
-    } catch {
-      setMessage("Login failed. Please check your credentials.");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Login failed. Please check your credentials.";
+      setMessage(`Login failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

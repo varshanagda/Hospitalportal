@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { logout, getCurrentUser } from "../services/authService";
+import { getCurrentUser } from "../services/authService";
 import { getDoctorSlots, createSlot, deleteSlot, type Slot } from "../services/slotService";
 import { getDoctorAppointments, updateAppointmentStatus, type Appointment } from "../services/appointmentService";
 import Popup from "../components/Popup";
+import { HoverButton } from "../components/shared/HoverButton";
+import { LogoutButton } from "../components/shared/LogoutButton";
+import { ConditionalHoverButton } from "../components/shared/ConditionalHoverButton";
+import { StatusBadge } from "../components/shared/StatusBadge";
+import { DashboardMessage } from "../components/shared/DashboardMessage";
+import { useLogoutHandler } from "../hooks/useLogout";
+import { getErrorMessage, logError } from "../utils/errorHandler";
 
 const DoctorDashboard = () => {
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -31,8 +37,8 @@ const DoctorDashboard = () => {
     max_bookings: 1
   });
 
-  const navigate = useNavigate();
   const user = getCurrentUser();
+  const handleLogout = useLogoutHandler(setPopup);
 
   useEffect(() => {
     loadSlots();
@@ -43,8 +49,9 @@ const DoctorDashboard = () => {
     try {
       const res = await getDoctorSlots();
       setSlots(res.slots);
-    } catch (_err: any) {
-      setError("Failed to load slots");
+    } catch (error: unknown) {
+      logError(error, "loadSlots");
+      setError(getErrorMessage(error, "Failed to load slots"));
     }
   };
 
@@ -52,8 +59,9 @@ const DoctorDashboard = () => {
     try {
       const res = await getDoctorAppointments();
       setAppointments(res.appointments);
-    } catch (_err: any) {
-      setError("Failed to load appointments");
+    } catch (error: unknown) {
+      logError(error, "loadAppointments");
+      setError(getErrorMessage(error, "Failed to load appointments"));
     }
   };
 
@@ -66,10 +74,9 @@ const DoctorDashboard = () => {
       setMessage("Slot created successfully!");
       setNewSlot({ slot_date: "", start_time: "", end_time: "", max_bookings: 1 });
       loadSlots();
-    } catch (_err: any) {
-      console.error("Slot creation error:", _err);
-      const errorMsg = _err.response?.data?.message || _err.message || "Failed to create slot";
-      setError(errorMsg);
+    } catch (error: unknown) {
+      logError(error, "createSlot");
+      setError(getErrorMessage(error, "Failed to create slot"));
     }
   };
 
@@ -85,8 +92,9 @@ const DoctorDashboard = () => {
           setMessage("Slot deleted");
           loadSlots();
           setPopup({ ...popup, isOpen: false });
-        } catch (_err: any) {
-          setError("Failed to delete slot");
+        } catch (error: unknown) {
+          logError(error, "deleteSlot");
+          setError(getErrorMessage(error, "Failed to delete slot"));
           setPopup({ ...popup, isOpen: false });
         }
       }
@@ -98,85 +106,14 @@ const DoctorDashboard = () => {
       await updateAppointmentStatus(id, status);
       setMessage(`Appointment ${status}`);
       loadAppointments();
-    } catch (_err: any) {
-      setError("Failed to update status");
+    } catch (error: unknown) {
+      logError(error, "updateAppointmentStatus");
+      setError(getErrorMessage(error, "Failed to update status"));
     }
   };
 
-  const handleLogout = () => {
-    setPopup({
-      isOpen: true,
-      type: "confirm",
-      title: "Logout",
-      message: "Are you sure you want to logout?",
-      onConfirm: () => {
-        logout();
-        navigate("/login");
-      }
-    });
-  };
 
-  // Reusable mouse event handlers to reduce duplication
-  const handleLogoutButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = "rgba(255,255,255,0.4)";
-    e.currentTarget.style.transform = "scale(1.1)";
-    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-  };
 
-  const handleLogoutButtonHoverOut = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-    e.currentTarget.style.transform = "scale(1)";
-    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-  };
-
-  const handleButtonHoverWithColor = (hoverColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = hoverColor;
-  };
-
-  const handleButtonHoverOutWithColor = (defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = defaultColor;
-  };
-
-  const handleDeleteButtonHover = (canDelete: boolean) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (canDelete) {
-      e.currentTarget.style.background = "#c82333";
-    }
-  };
-
-  const handleDeleteButtonHoverOut = (canDelete: boolean) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (canDelete) {
-      e.currentTarget.style.background = "#dc3545";
-    }
-  };
-
-  const buttonStyle = {
-    padding: "12px 24px",
-    fontSize: "16px",
-    fontWeight: "600",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-  };
-
-  const primaryButton = {
-    ...buttonStyle,
-    background: "#007bff",
-    color: "white"
-  };
-
-  const successButton = {
-    ...buttonStyle,
-    background: "#28a745",
-    color: "white"
-  };
-
-  const dangerButton = {
-    ...buttonStyle,
-    background: "#dc3545",
-    color: "white"
-  };
 
   const inputStyle = {
     padding: "12px 16px",
@@ -204,30 +141,7 @@ const DoctorDashboard = () => {
           <h1 style={{ margin: 0, fontSize: "28px" }}>👨‍⚕️ Doctor Dashboard</h1>
           <p style={{ margin: "8px 0 0 0", opacity: 0.9 }}>Welcome, Dr. {user?.full_name || user?.email}</p>
         </div>
-        <button 
-          onClick={handleLogout} 
-          style={{
-            background: "rgba(255,255,255,0.25)",
-            color: "white",
-            border: "1px solid rgba(255,255,255,0.5)",
-            width: "50px",
-            height: "50px",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "11px",
-            fontWeight: "600",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-          }}
-          onMouseOver={handleLogoutButtonHover}
-          onMouseOut={handleLogoutButtonHoverOut}
-        >
-          Logout
-        </button>
+        <LogoutButton onClick={handleLogout} />
       </div>
 
       {/* Tabs */}
@@ -272,30 +186,7 @@ const DoctorDashboard = () => {
       </div>
 
       {/* Messages */}
-      {message && (
-        <div style={{ 
-          padding: "12px 16px", 
-          background: "#d4edda", 
-          color: "#155724", 
-          marginBottom: "15px", 
-          borderRadius: "8px",
-          border: "1px solid #c3e6cb"
-        }}>
-          ✅ {message}
-        </div>
-      )}
-      {error && (
-        <div style={{ 
-          padding: "12px 16px", 
-          background: "#f8d7da", 
-          color: "#721c24", 
-          marginBottom: "15px", 
-          borderRadius: "8px",
-          border: "1px solid #f5c6cb"
-        }}>
-          ❌ {error}
-        </div>
-      )}
+      <DashboardMessage message={message} error={error} variant="simple" />
 
       {/* Slots Tab */}
       {activeTab === "slots" && (
@@ -354,14 +245,9 @@ const DoctorDashboard = () => {
                   onBlur={(e) => e.currentTarget.style.borderColor = "#e0e0e0"}
                 />
               </div>
-              <button 
-                type="submit" 
-                style={primaryButton}
-                onMouseOver={handleButtonHoverWithColor("#0056b3")}
-                onMouseOut={handleButtonHoverOutWithColor("#007bff")}
-              >
+              <HoverButton type="submit" variant="primary">
                 ➕ Create Slot
-              </button>
+              </HoverButton>
             </form>
           </div>
 
@@ -405,20 +291,14 @@ const DoctorDashboard = () => {
                       👥 {slot.current_bookings}/{slot.max_bookings} booked
                     </p>
                   </div>
-                  <button
+                  <ConditionalHoverButton
                     onClick={() => handleDeleteSlot(slot.id)}
                     disabled={slot.current_bookings > 0}
-                    style={{
-                      ...dangerButton,
-                      background: slot.current_bookings > 0 ? "#6c757d" : "#dc3545",
-                      cursor: slot.current_bookings > 0 ? "not-allowed" : "pointer",
-                      opacity: slot.current_bookings > 0 ? 0.6 : 1
-                    }}
-                    onMouseOver={handleDeleteButtonHover(slot.current_bookings === 0)}
-                    onMouseOut={handleDeleteButtonHoverOut(slot.current_bookings === 0)}
+                    canHover={slot.current_bookings === 0}
+                    variant="danger"
                   >
                     ❌ Delete
-                  </button>
+                  </ConditionalHoverButton>
                 </div>
               ))}
             </div>
@@ -465,59 +345,32 @@ const DoctorDashboard = () => {
                   </div>
                   <p style={{ margin: "5px 0 15px 0" }}>
                     <strong>Status:</strong>{" "}
-                    <span
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: "6px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        background:
-                          apt.status === "approved" ? "#d4edda" :
-                          apt.status === "pending" ? "#fff3cd" :
-                          apt.status === "completed" ? "#d1ecf1" : "#f8d7da",
-                        color:
-                          apt.status === "approved" ? "#155724" :
-                          apt.status === "pending" ? "#856404" :
-                          apt.status === "completed" ? "#0c5460" : "#721c24"
-                      }}
-                    >
-                      {apt.status.toUpperCase()}
-                    </span>
+                    <StatusBadge status={apt.status} variant="simple" />
                   </p>
                   {apt.status === "pending" && (
                     <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                      <button
+                      <HoverButton
                         onClick={() => handleUpdateStatus(apt.id, "approved")}
-                        style={successButton}
-                        onMouseOver={handleButtonHoverWithColor("#218838")}
-                        onMouseOut={handleButtonHoverOutWithColor("#28a745")}
+                        variant="success"
                       >
                         ✅ Approve
-                      </button>
-                      <button
+                      </HoverButton>
+                      <HoverButton
                         onClick={() => handleUpdateStatus(apt.id, "cancelled")}
-                        style={dangerButton}
-                        onMouseOver={handleButtonHoverWithColor("#c82333")}
-                        onMouseOut={handleButtonHoverOutWithColor("#dc3545")}
+                        variant="danger"
                       >
                         ❌ Reject
-                      </button>
+                      </HoverButton>
                     </div>
                   )}
                   {apt.status === "approved" && (
                     <div>
-                      <button
+                      <HoverButton
                         onClick={() => handleUpdateStatus(apt.id, "completed")}
-                        style={{
-                          ...buttonStyle,
-                          background: "#17a2b8",
-                          color: "white"
-                        }}
-                        onMouseOver={handleButtonHoverWithColor("#138496")}
-                        onMouseOut={handleButtonHoverOutWithColor("#17a2b8")}
+                        variant="info"
                       >
                         ✅ Mark Completed
-                      </button>
+                      </HoverButton>
                     </div>
                   )}
                 </div>

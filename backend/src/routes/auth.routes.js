@@ -48,6 +48,11 @@ router.post("/register", async (req, res) => {
       [email, hashedPassword, role, full_name, phone]
     );
 
+    if (!result.rows || result.rows.length === 0 || !result.rows[0].id) {
+      await client.query('ROLLBACK');
+      return res.status(500).json({ message: "Failed to create user" });
+    }
+
     const userId = result.rows[0].id;
 
     // 5. If role is doctor, automatically create a basic doctor profile
@@ -68,14 +73,21 @@ router.post("/register", async (req, res) => {
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Register error:", error);
-    console.error("Error stack:", error.stack);
-    return res.status(500).json({ 
-      message: "Server error",
-      error: error.message,
-      details: error.stack
+    await client.query('ROLLBACK').catch(() => {
+      // Ignore rollback errors
     });
+    console.error("Register error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    // Don't expose internal error details to client
+    if (errorMessage.includes("duplicate key") || errorMessage.includes("unique constraint")) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+    if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("database")) {
+      return res.status(503).json({ message: "Service temporarily unavailable" });
+    }
+    
+    return res.status(500).json({ message: "Server error" });
   } finally {
     client.release();
   }
@@ -106,6 +118,10 @@ router.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
+    if (!user || !user.password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
     // 3. Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -113,6 +129,15 @@ router.post("/login", async (req, res) => {
     }
 
     // 4. Generate JWT
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not configured");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
+
+    if (!user.id || !user.email || !user.role) {
+      return res.status(500).json({ message: "Invalid user data" });
+    }
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -132,16 +157,44 @@ router.post("/login", async (req, res) => {
 
   } catch (error) {
     console.error("Login error:", error);
+    // Don't expose internal error details to client
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("database")) {
+      return res.status(503).json({ message: "Service temporarily unavailable" });
+    }
     return res.status(500).json({ message: "Server error" });
   }
 });
 
 
 router.get("/profile", authMiddleware, async (req, res) => {
-  return res.json({
-    message: "Protected route accessed",
-    user: req.user,
-  });
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // Get fresh user data from database
+    const result = await pool.query(
+      "SELECT id, email, role, full_name, phone FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      message: "Profile retrieved successfully",
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("database")) {
+      return res.status(503).json({ message: "Service temporarily unavailable" });
+    }
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;

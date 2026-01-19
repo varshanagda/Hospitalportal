@@ -6,6 +6,10 @@ import Popup from "../components/Popup";
 import { useLogoutHandler } from "../hooks/useLogout";
 import { DashboardMessage } from "../components/shared/DashboardMessage";
 import { StatusBadge } from "../components/shared/StatusBadge";
+import { AdminFormInput } from "../components/shared/AdminFormInput";
+import { AdminButton } from "../components/shared/AdminButton";
+import { Card } from "../components/shared/Card";
+import { getErrorMessage, logError } from "../utils/errorHandler";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -49,8 +53,9 @@ const AdminDashboard = () => {
     try {
       const res = await getAllAppointments();
       setAppointments(res.appointments);
-    } catch (_err: any) {
-      setError("Failed to load appointments");
+    } catch (error: unknown) {
+      logError(error, "loadAppointments");
+      setError(getErrorMessage(error, "Failed to load appointments"));
     }
   };
 
@@ -58,8 +63,9 @@ const AdminDashboard = () => {
     try {
       const res = await getAllDoctors("", false);
       setDoctors(res.doctors);
-    } catch (_err: any) {
-      setError("Failed to load doctors");
+    } catch (error: unknown) {
+      logError(error, "loadDoctors");
+      setError(getErrorMessage(error, "Failed to load doctors"));
     }
   };
 
@@ -68,8 +74,9 @@ const AdminDashboard = () => {
       await updateAppointmentStatus(id, status);
       setMessage(`Appointment ${status}`);
       loadAppointments();
-    } catch (_err: any) {
-      setError("Failed to update status");
+    } catch (error: unknown) {
+      logError(error, "updateAppointmentStatus");
+      setError(getErrorMessage(error, "Failed to update status"));
     }
   };
 
@@ -89,8 +96,9 @@ const AdminDashboard = () => {
         consultation_fee: 0
       });
       loadDoctors();
-    } catch (_err: any) {
-      setError("Failed to create doctor");
+    } catch (error: unknown) {
+      logError(error, "createDoctor");
+      setError(getErrorMessage(error, "Failed to create doctor"));
     }
   };
 
@@ -182,15 +190,7 @@ const AdminDashboard = () => {
           ) : (
             <div>
               {appointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  style={{
-                    padding: "15px",
-                    marginBottom: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px"
-                  }}
-                >
+                <Card key={apt.id} variant="appointment">
                   <div style={{ marginBottom: "10px" }}>
                     <h4 style={{ margin: "0 0 10px 0" }}>
                       {apt.patient_name} → Dr. {apt.doctor_name}
@@ -206,21 +206,21 @@ const AdminDashboard = () => {
                   </div>
                   {apt.status === "pending" && (
                     <div style={{ display: "flex", gap: "10px" }}>
-                      <button
+                      <AdminButton
                         onClick={() => handleUpdateStatus(apt.id, "approved")}
-                        style={{ padding: "8px 16px", background: "#28a745", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        variant="success"
                       >
                         Approve
-                      </button>
-                      <button
+                      </AdminButton>
+                      <AdminButton
                         onClick={() => handleUpdateStatus(apt.id, "cancelled")}
-                        style={{ padding: "8px 16px", background: "#dc3545", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        variant="danger"
                       >
                         Reject
-                      </button>
+                      </AdminButton>
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -233,70 +233,62 @@ const AdminDashboard = () => {
           <h3>Add New Doctor</h3>
           <form onSubmit={handleCreateDoctor} style={{ marginBottom: "30px" }}>
             <div style={{ display: "grid", gap: "10px", marginBottom: "10px" }}>
-              <input
+              <AdminFormInput
                 type="email"
                 placeholder="Email"
                 value={newDoctor.email}
                 onChange={(e) => setNewDoctor({ ...newDoctor, email: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="password"
                 placeholder="Password"
                 value={newDoctor.password}
                 onChange={(e) => setNewDoctor({ ...newDoctor, password: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Full Name"
                 value={newDoctor.full_name}
                 onChange={(e) => setNewDoctor({ ...newDoctor, full_name: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="tel"
                 placeholder="Phone"
                 value={newDoctor.phone}
                 onChange={(e) => setNewDoctor({ ...newDoctor, phone: e.target.value })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Specialization"
                 value={newDoctor.specialization}
                 onChange={(e) => setNewDoctor({ ...newDoctor, specialization: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Qualification"
                 value={newDoctor.qualification}
                 onChange={(e) => setNewDoctor({ ...newDoctor, qualification: e.target.value })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="number"
                 placeholder="Experience (years)"
                 value={newDoctor.experience_years || ""}
                 onChange={(e) => setNewDoctor({ ...newDoctor, experience_years: parseInt(e.target.value) || 0 })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="number"
                 placeholder="Consultation Fee"
                 value={newDoctor.consultation_fee || ""}
                 onChange={(e) => setNewDoctor({ ...newDoctor, consultation_fee: parseFloat(e.target.value) || 0 })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
             </div>
-            <button type="submit" style={{ padding: "10px 20px", cursor: "pointer", background: "#007bff", color: "white", border: "none", borderRadius: "5px" }}>
+            <AdminButton type="submit">
               Add Doctor
-            </button>
+            </AdminButton>
           </form>
 
           <h3>All Doctors</h3>
@@ -305,15 +297,7 @@ const AdminDashboard = () => {
           ) : (
             <div>
               {doctors.map((doctor) => (
-                <div
-                  key={doctor.id}
-                  style={{
-                    padding: "15px",
-                    marginBottom: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px"
-                  }}
-                >
+                <Card key={doctor.id} variant="doctor">
                   <h4 style={{ margin: "0 0 10px 0" }}>Dr. {doctor.full_name}</h4>
                   <p style={{ margin: "5px 0" }}><strong>Email:</strong> {doctor.email}</p>
                   <p style={{ margin: "5px 0" }}><strong>Specialization:</strong> {doctor.specialization}</p>
@@ -326,7 +310,7 @@ const AdminDashboard = () => {
                       {doctor.is_available ? "Yes" : "No"}
                     </span>
                   </p>
-                </div>
+                </Card>
               ))}
             </div>
           )}

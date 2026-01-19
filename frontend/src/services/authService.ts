@@ -29,33 +29,78 @@ export const register = async (data: RegisterData) => {
 };
 
 export const login = async (email: string, password: string) => {
-  const res = await axios.post(`${API_URL}/login`, { email, password });
-  localStorage.setItem("token", res.data.token);
-  if (res.data.user) {
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+  try {
+    if (!email || !password) {
+      throw new Error("Email and password are required");
+    }
+    
+    const res = await axios.post(`${API_URL}/login`, { email, password });
+    
+    if (!res.data || !res.data.token) {
+      throw new Error("Invalid response from server");
+    }
+    
+    localStorage.setItem("token", res.data.token);
+    if (res.data.user) {
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+    }
+    return res.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || "Login failed";
+      throw new Error(message);
+    }
+    throw error instanceof Error ? error : new Error("Login failed");
   }
-  return res.data;
 };
 
-export const getProfile = () => {
-  const token = localStorage.getItem("token");
-  return axios.get(`${API_URL}/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getProfile = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    
+    const res = await axios.get(`${API_URL}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!res.data) {
+      throw new Error("Invalid response from server");
+    }
+    
+    return res;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || "Failed to get profile";
+      throw new Error(message);
+    }
+    throw error instanceof Error ? error : new Error("Failed to get profile");
+  }
 };
 
 export const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
-    try {
-      return JSON.parse(userStr);
-    } catch {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
       return null;
     }
+    
+    const parsed = JSON.parse(userStr);
+    if (!parsed || typeof parsed !== "object" || !parsed.id || !parsed.email || !parsed.role) {
+      // Invalid user data, clear it
+      localStorage.removeItem("user");
+      return null;
+    }
+    
+    return parsed as User;
+  } catch (error: unknown) {
+    // Invalid JSON or other error, clear corrupted data
+    localStorage.removeItem("user");
+    return null;
   }
-  return null;
 };
 
 export const logout = () => {

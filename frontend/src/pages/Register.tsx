@@ -31,12 +31,26 @@ const Register = () => {
     setLoading(true);
     
     try {
+      if (!email || !password) {
+        setError("Email and password are required");
+        return;
+      }
+      
       await register({ email, password, role, full_name: fullName, phone });
       setMessage("Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
-    } catch (err: any) {
-      console.error("Registration error:", err.response?.data);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || "Registration failed. Please check backend logs.";
+    } catch (error: unknown) {
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null && "response" in error) {
+        const axiosError = error as { response?: { data?: { error?: string; message?: string } } };
+        errorMessage = axiosError.response?.data?.error || 
+                      axiosError.response?.data?.message || 
+                      errorMessage;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);

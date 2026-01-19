@@ -7,6 +7,7 @@ import Popup from "../components/Popup";
 import { useLogoutHandler } from "../hooks/useLogout";
 import { DashboardMessage } from "../components/shared/DashboardMessage";
 import { StatusBadge } from "../components/shared/StatusBadge";
+import { getErrorMessage, logError } from "../utils/errorHandler";
 
 const UserDashboard = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -47,8 +48,9 @@ const UserDashboard = () => {
       setError("");
       const res = await getAllDoctors(searchSpecialization.trim(), true);
       setDoctors(res.doctors || []);
-    } catch (_err: any) {
-      setError("Failed to load doctors");
+    } catch (error: unknown) {
+      logError(error, "loadDoctors");
+      setError(getErrorMessage(error, "Failed to load doctors"));
     } finally {
       setLoading(false);
     }
@@ -59,8 +61,9 @@ const UserDashboard = () => {
     try {
       const res = await getAvailableSlots(selectedDoctorId, selectedDate);
       setAvailableSlots(res.slots);
-    } catch (_err: any) {
-      setError("Failed to load slots");
+    } catch (error: unknown) {
+      logError(error, "loadSlots");
+      setError(getErrorMessage(error, "Failed to load slots"));
     }
   };
 
@@ -68,8 +71,9 @@ const UserDashboard = () => {
     try {
       const res = await getUserAppointments();
       setAppointments(res.appointments);
-    } catch (_err: any) {
-      setError("Failed to load appointments");
+    } catch (error: unknown) {
+      logError(error, "loadAppointments");
+      setError(getErrorMessage(error, "Failed to load appointments"));
     }
   };
 
@@ -95,8 +99,9 @@ const UserDashboard = () => {
           setSelectedDoctorId(null);
           loadAppointments();
           setPopup({ ...popup, isOpen: false });
-        } catch (_err: any) {
-          setError("Failed to book appointment");
+        } catch (error: unknown) {
+          logError(error, "bookAppointment");
+          setError(getErrorMessage(error, "Failed to book appointment"));
           setPopup({ ...popup, isOpen: false });
         }
       }
@@ -125,8 +130,9 @@ const UserDashboard = () => {
               setMessage("Appointment cancelled");
               loadAppointments();
               setPopup({ ...popup, isOpen: false });
-            } catch (_err: any) {
-              setError("Failed to cancel appointment");
+            } catch (error: unknown) {
+              logError(error, "cancelAppointment");
+              setError(getErrorMessage(error, "Failed to cancel appointment"));
               setPopup({ ...popup, isOpen: false });
             }
           }
