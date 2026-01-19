@@ -12,6 +12,10 @@ on:
       - develop
       - master
 
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
 jobs:
   test-backend:
     name: Backend Tests & Coverage
@@ -133,8 +137,8 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         with:
           projectBaseDir: backend
           args: >
@@ -152,10 +156,10 @@ jobs:
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         continue-on-error: true
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
 
       - name: Check Quality Gate Status
         if: steps.sonarqube-quality-gate-check.outcome == 'failure'
@@ -199,8 +203,8 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         with:
           projectBaseDir: frontend
           args: >
@@ -218,8 +222,8 @@ jobs:
         id: sonarqube-quality-gate-check-frontend
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         continue-on-error: true
 
   quality-gate-check:
@@ -227,23 +231,26 @@ jobs:
     needs: [sonar-backend, sonar-frontend]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
+      # When Sonar is not configured, just log and pass.
+      - name: Skip Quality Gate (Sonar not configured)
+        if: ${{ env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == '' }}
+        run: |
+          echo "⚠️ SonarQube not configured - skipping Quality Gate check"
+          echo "To enable Quality Gate checks, configure SONAR_TOKEN and SONAR_HOST_URL secrets"
+          echo "✅ Tests passed - PR is ready to merge!"
+
+      # When Sonar is configured, fail the job only if any Sonar job failed.
       - name: Check Quality Gate Results
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
         run: |
           echo "Checking Quality Gate status..."
-          # Only fail if SonarQube is configured and Quality Gate actually failed
-          if [ -n "${{ secrets.SONAR_TOKEN }}" ] && [ -n "${{ secrets.SONAR_HOST_URL }}" ]; then
-            if [ "${{ needs.sonar-backend.result }}" == "failure" ] || [ "${{ needs.sonar-frontend.result }}" == "failure" ]; then
-              echo "❌ Quality Gate FAILED"
-              echo "PR cannot be merged. Please fix the issues and try again."
-              exit 1
-            else
-              echo "✅ Quality Gate PASSED"
-              echo "PR is ready to merge!"
-            fi
+          if [ "${{ needs.sonar-backend.result }}" == "failure" ] || [ "${{ needs.sonar-frontend.result }}" == "failure" ]; then
+            echo "❌ Quality Gate FAILED"
+            echo "PR cannot be merged. Please fix the issues and try again."
+            exit 1
           else
-            echo "⚠️ SonarQube not configured - skipping Quality Gate check"
-            echo "To enable Quality Gate checks, configure SONAR_TOKEN and SONAR_HOST_URL secrets"
-            echo "✅ Tests passed - PR is ready to merge!"
+            echo "✅ Quality Gate PASSED"
+            echo "PR is ready to merge!"
           fi
