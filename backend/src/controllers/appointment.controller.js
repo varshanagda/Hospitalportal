@@ -2,6 +2,126 @@ const pool = require("../db");
 const emailService = require("../services/email.service");
 
 /**
+ * Helper: Execute a function within a database transaction
+ */
+const withTransaction = async (callback) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+/**
+ * Helper: Rollback transaction and return error response
+ */
+const rollbackAndRespond = async (client, res, statusCode, message) => {
+  await client.query('ROLLBACK');
+  return res.status(statusCode).json({ message });
+};
+
+/**
+ * Helper: Handle transaction error
+ */
+const handleTransactionError = async (client, error, errorMessage, res) => {
+  await client.query('ROLLBACK');
+  console.error(errorMessage, error);
+  return res.status(500).json({ message: "Server error" });
+};
+
+/**
+ * Helper: Get appointment with details
+ */
+const getAppointmentWithDetails = async (client, appointmentId, doctorId = null) => {
+  let query = `
+    SELECT a.*, u.email as user_email, u.full_name as user_name,
+           u2.full_name as doctor_name, d.specialization
+    FROM appointments a
+    JOIN users u ON a.user_id = u.id
+    JOIN doctors d ON a.doctor_id = d.id
+    JOIN users u2 ON d.user_id = u2.id
+    WHERE a.id = $1
+  `;
+  const params = [appointmentId];
+  
+  if (doctorId) {
+    query += ` AND a.doctor_id = $2`;
+    params.push(doctorId);
+  }
+  
+  return await client.query(query, params);
+};
+
+/**
+ * Helper: Update appointment status
+ */
+const updateAppointmentStatus = async (client, appointmentId, status, approvedBy, adminNotes = null) => {
+  return await client.query(
+    `UPDATE appointments 
+     SET status = $1,
+         admin_notes = $2,
+         approved_by = $3,
+         approved_at = NOW(),
+         updated_at = NOW()
+     WHERE id = $4`,
+    [status, adminNotes, approvedBy, appointmentId]
+  );
+};
+
+/**
+ * Helper: Log appointment history
+ */
+const logAppointmentHistory = async (client, appointmentId, action, oldStatus, newStatus, changedBy, changeReason = null) => {
+  return await client.query(
+    `INSERT INTO appointment_history 
+     (appointment_id, action, old_status, new_status, changed_by, change_reason)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [appointmentId, action, oldStatus || null, newStatus, changedBy, changeReason]
+  );
+};
+
+/**
+ * Helper: Update slot bookings count
+ */
+const updateSlotBookings = async (client, slotId, increment = true) => {
+  if (increment) {
+    return await client.query(
+      `UPDATE slots 
+       SET current_bookings = current_bookings + 1
+       WHERE id = $1`,
+      [slotId]
+    );
+  } else {
+    return await client.query(
+      `UPDATE slots 
+       SET current_bookings = GREATEST(0, current_bookings - 1)
+       WHERE id = $1`,
+      [slotId]
+    );
+  }
+};
+
+/**
+ * Helper: Send appointment approval email
+ */
+const sendApprovalEmail = async (appointment) => {
+  await emailService.sendAppointmentApproval(appointment.user_email, {
+    userName: appointment.user_name || appointment.user_email,
+    doctorName: appointment.doctor_name,
+    date: appointment.appointment_date,
+    startTime: appointment.start_time,
+    endTime: appointment.end_time
+  });
+};
+
+/**
  * Book an appointment (User)
  * Implements optimistic locking and transaction handling
  */
@@ -33,25 +153,20 @@ const bookAppointment = async (req, res) => {
     );
 
     if (slotResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ message: "Slot not found" });
+      return await rollbackAndRespond(client, res, 404, "Slot not found");
     }
 
     const slot = slotResult.rows[0];
 
     // Check slot availability
     if (!slot.is_available || slot.current_bookings >= slot.max_bookings) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ 
-        message: "Slot is no longer available" 
-      });
+      return await rollbackAndRespond(client, res, 409, "Slot is no longer available");
     }
 
     // Check if slot is in the past
     const slotDateTime = new Date(`${slot.slot_date} ${slot.start_time}`);
     if (slotDateTime < new Date()) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ message: "Cannot book past slots" });
+      return await rollbackAndRespond(client, res, 400, "Cannot book past slots");
     }
 
     // Check if user already has appointment in this slot
@@ -62,10 +177,8 @@ const bookAppointment = async (req, res) => {
     );
 
     if (existingBooking.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ 
-        message: "You already have an appointment in this slot" 
-      });
+      return await rollbackAndRespond(client, res, 409, 
+        "You already have an appointment in this slot");
     }
 
     // Create appointment
@@ -91,19 +204,12 @@ const bookAppointment = async (req, res) => {
 
     if (updateResult.rows.length === 0) {
       // Version mismatch - concurrent booking detected
-      await client.query('ROLLBACK');
-      return res.status(409).json({ 
-        message: "Slot was just booked by someone else. Please try again." 
-      });
+      return await rollbackAndRespond(client, res, 409, 
+        "Slot was just booked by someone else. Please try again.");
     }
 
     // Log appointment history
-    await client.query(
-      `INSERT INTO appointment_history 
-       (appointment_id, action, new_status, changed_by)
-       VALUES ($1, 'created', 'pending', $2)`,
-      [appointment.id, userId]
-    );
+    await logAppointmentHistory(client, appointment.id, 'created', null, 'pending', userId);
 
     await client.query('COMMIT');
 
@@ -141,9 +247,7 @@ const bookAppointment = async (req, res) => {
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Book appointment error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return await handleTransactionError(client, error, "Book appointment error:", res);
   } finally {
     client.release();
   }
@@ -296,68 +400,34 @@ const approveAppointment = async (req, res) => {
     await client.query('BEGIN');
 
     // Get appointment details
-    const appointmentResult = await client.query(
-      `SELECT a.*, u.email as user_email, u.full_name as user_name,
-              u2.full_name as doctor_name, d.specialization
-       FROM appointments a
-       JOIN users u ON a.user_id = u.id
-       JOIN doctors d ON a.doctor_id = d.id
-       JOIN users u2 ON d.user_id = u2.id
-       WHERE a.id = $1`,
-      [id]
-    );
+    const appointmentResult = await getAppointmentWithDetails(client, id);
 
     if (appointmentResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ message: "Appointment not found" });
+      return await rollbackAndRespond(client, res, 404, "Appointment not found");
     }
 
     const appointment = appointmentResult.rows[0];
 
     if (appointment.status !== 'pending') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ 
-        message: `Cannot approve appointment with status: ${appointment.status}` 
-      });
+      return await rollbackAndRespond(client, res, 400, 
+        `Cannot approve appointment with status: ${appointment.status}`);
     }
 
     // Update appointment
-    await client.query(
-      `UPDATE appointments 
-       SET status = 'approved',
-           admin_notes = $1,
-           approved_by = $2,
-           approved_at = NOW(),
-           updated_at = NOW()
-       WHERE id = $3`,
-      [admin_notes, adminId, id]
-    );
+    await updateAppointmentStatus(client, id, 'approved', adminId, admin_notes);
 
     // Log history
-    await client.query(
-      `INSERT INTO appointment_history 
-       (appointment_id, action, old_status, new_status, changed_by, change_reason)
-       VALUES ($1, 'approved', 'pending', 'approved', $2, $3)`,
-      [id, adminId, admin_notes]
-    );
+    await logAppointmentHistory(client, id, 'approved', 'pending', 'approved', adminId, admin_notes);
 
     await client.query('COMMIT');
 
     // Send approval email
-    await emailService.sendAppointmentApproval(appointment.user_email, {
-      userName: appointment.user_name || appointment.user_email,
-      doctorName: appointment.doctor_name,
-      date: appointment.appointment_date,
-      startTime: appointment.start_time,
-      endTime: appointment.end_time
-    });
+    await sendApprovalEmail(appointment);
 
     return res.json({ message: "Appointment approved successfully" });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Approve appointment error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return await handleTransactionError(client, error, "Approve appointment error:", res);
   } finally {
     client.release();
   }
@@ -383,75 +453,41 @@ const approveAppointmentByDoctor = async (req, res) => {
     );
 
     if (doctorResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(403).json({ message: "Doctor profile not found" });
+      return await rollbackAndRespond(client, res, 403, "Doctor profile not found");
     }
 
     const doctorId = doctorResult.rows[0].id;
 
     // Get appointment details and verify it belongs to this doctor
-    const appointmentResult = await client.query(
-      `SELECT a.*, u.email as user_email, u.full_name as user_name,
-              u2.full_name as doctor_name, d.specialization
-       FROM appointments a
-       JOIN users u ON a.user_id = u.id
-       JOIN doctors d ON a.doctor_id = d.id
-       JOIN users u2 ON d.user_id = u2.id
-       WHERE a.id = $1 AND a.doctor_id = $2`,
-      [id, doctorId]
-    );
+    const appointmentResult = await getAppointmentWithDetails(client, id, doctorId);
 
     if (appointmentResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ message: "Appointment not found or you don't have permission to approve it" });
+      return await rollbackAndRespond(client, res, 404, 
+        "Appointment not found or you don't have permission to approve it");
     }
 
     const appointment = appointmentResult.rows[0];
 
     if (appointment.status !== 'pending') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ 
-        message: `Cannot approve appointment with status: ${appointment.status}` 
-      });
+      return await rollbackAndRespond(client, res, 400, 
+        `Cannot approve appointment with status: ${appointment.status}`);
     }
 
     // Update appointment
-    await client.query(
-      `UPDATE appointments 
-       SET status = 'approved',
-           admin_notes = $1,
-           approved_by = $2,
-           approved_at = NOW(),
-           updated_at = NOW()
-       WHERE id = $3`,
-      [admin_notes, doctorUserId, id]
-    );
+    await updateAppointmentStatus(client, id, 'approved', doctorUserId, admin_notes);
 
     // Log history
-    await client.query(
-      `INSERT INTO appointment_history 
-       (appointment_id, action, old_status, new_status, changed_by, change_reason)
-       VALUES ($1, 'approved', 'pending', 'approved', $2, $3)`,
-      [id, doctorUserId, admin_notes]
-    );
+    await logAppointmentHistory(client, id, 'approved', 'pending', 'approved', doctorUserId, admin_notes);
 
     await client.query('COMMIT');
 
     // Send approval email
-    await emailService.sendAppointmentApproval(appointment.user_email, {
-      userName: appointment.user_name || appointment.user_email,
-      doctorName: appointment.doctor_name,
-      date: appointment.appointment_date,
-      startTime: appointment.start_time,
-      endTime: appointment.end_time
-    });
+    await sendApprovalEmail(appointment);
 
     return res.json({ message: "Appointment approved successfully" });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Approve appointment by doctor error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return await handleTransactionError(client, error, "Approve appointment by doctor error:", res);
   } finally {
     client.release();
   }
@@ -495,22 +531,18 @@ const cancelAppointment = async (req, res) => {
     const appointmentResult = await client.query(appointmentQuery, params);
 
     if (appointmentResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ 
-        message: "Appointment not found or unauthorized" 
-      });
+      return await rollbackAndRespond(client, res, 404, 
+        "Appointment not found or unauthorized");
     }
 
     const appointment = appointmentResult.rows[0];
 
     if (appointment.status === 'cancelled') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ message: "Appointment already cancelled" });
+      return await rollbackAndRespond(client, res, 400, "Appointment already cancelled");
     }
 
     if (appointment.status === 'completed') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ message: "Cannot cancel completed appointment" });
+      return await rollbackAndRespond(client, res, 400, "Cannot cancel completed appointment");
     }
 
     // Check cancellation policy (e.g., cannot cancel within 24 hours)
@@ -518,10 +550,8 @@ const cancelAppointment = async (req, res) => {
     const hoursUntilAppointment = (appointmentDateTime - new Date()) / (1000 * 60 * 60);
     
     if (hoursUntilAppointment < 24 && userRole === 'user') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ 
-        message: "Cannot cancel appointment within 24 hours. Please contact support." 
-      });
+      return await rollbackAndRespond(client, res, 400, 
+        "Cannot cancel appointment within 24 hours. Please contact support.");
     }
 
     // Update appointment
@@ -537,21 +567,11 @@ const cancelAppointment = async (req, res) => {
 
     // Free up the slot
     if (appointment.slot_id) {
-      await client.query(
-        `UPDATE slots 
-         SET current_bookings = GREATEST(0, current_bookings - 1)
-         WHERE id = $1`,
-        [appointment.slot_id]
-      );
+      await updateSlotBookings(client, appointment.slot_id, false);
     }
 
     // Log history
-    await client.query(
-      `INSERT INTO appointment_history 
-       (appointment_id, action, old_status, new_status, changed_by, change_reason)
-       VALUES ($1, 'cancelled', $2, 'cancelled', $3, $4)`,
-      [id, appointment.status, userId, cancellation_reason]
-    );
+    await logAppointmentHistory(client, id, 'cancelled', appointment.status, 'cancelled', userId, cancellation_reason);
 
     await client.query('COMMIT');
 
@@ -568,9 +588,7 @@ const cancelAppointment = async (req, res) => {
     return res.json({ message: "Appointment cancelled successfully" });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Cancel appointment error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return await handleTransactionError(client, error, "Cancel appointment error:", res);
   } finally {
     client.release();
   }
@@ -600,17 +618,15 @@ const rescheduleAppointment = async (req, res) => {
     );
 
     if (appointmentResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ message: "Appointment not found or unauthorized" });
+      return await rollbackAndRespond(client, res, 404, 
+        "Appointment not found or unauthorized");
     }
 
     const appointment = appointmentResult.rows[0];
 
     if (appointment.status === 'cancelled' || appointment.status === 'completed') {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ 
-        message: `Cannot reschedule ${appointment.status} appointment` 
-      });
+      return await rollbackAndRespond(client, res, 400, 
+        `Cannot reschedule ${appointment.status} appointment`);
     }
 
     // Check rescheduling policy
@@ -618,10 +634,8 @@ const rescheduleAppointment = async (req, res) => {
     const hoursUntilAppointment = (appointmentDateTime - new Date()) / (1000 * 60 * 60);
     
     if (hoursUntilAppointment < 48) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ 
-        message: "Cannot reschedule appointment within 48 hours" 
-      });
+      return await rollbackAndRespond(client, res, 400, 
+        "Cannot reschedule appointment within 48 hours");
     }
 
     // Get new slot with locking
@@ -631,25 +645,18 @@ const rescheduleAppointment = async (req, res) => {
     );
 
     if (slotResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ message: "New slot not found" });
+      return await rollbackAndRespond(client, res, 404, "New slot not found");
     }
 
     const newSlot = slotResult.rows[0];
 
     if (!newSlot.is_available || newSlot.current_bookings >= newSlot.max_bookings) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ message: "New slot is not available" });
+      return await rollbackAndRespond(client, res, 409, "New slot is not available");
     }
 
     // Free up old slot
     if (appointment.slot_id) {
-      await client.query(
-        `UPDATE slots 
-         SET current_bookings = GREATEST(0, current_bookings - 1)
-         WHERE id = $1`,
-        [appointment.slot_id]
-      );
+      await updateSlotBookings(client, appointment.slot_id, false);
     }
 
     // Update appointment
@@ -666,29 +673,17 @@ const rescheduleAppointment = async (req, res) => {
     );
 
     // Book new slot
-    await client.query(
-      `UPDATE slots 
-       SET current_bookings = current_bookings + 1
-       WHERE id = $1`,
-      [new_slot_id]
-    );
+    await updateSlotBookings(client, new_slot_id, true);
 
     // Log history
-    await client.query(
-      `INSERT INTO appointment_history 
-       (appointment_id, action, old_status, new_status, changed_by, change_reason)
-       VALUES ($1, 'rescheduled', $2, 'pending', $3, 'Appointment rescheduled')`,
-      [id, appointment.status, userId]
-    );
+    await logAppointmentHistory(client, id, 'rescheduled', appointment.status, 'pending', userId, 'Appointment rescheduled');
 
     await client.query('COMMIT');
 
     return res.json({ message: "Appointment rescheduled successfully. Awaiting approval." });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Reschedule appointment error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return await handleTransactionError(client, error, "Reschedule appointment error:", res);
   } finally {
     client.release();
   }

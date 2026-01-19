@@ -2,22 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
 import {
-  inputStyle,
-  buttonStyle,
   containerStyle,
   cardStyle,
-  labelStyle,
   headingStyle,
   formStyle
 } from "../components/shared/FormStyles";
-import {
-  handleInputFocus,
-  handleInputBlur,
-  handleButtonMouseOver,
-  handleButtonMouseOut,
-  handleLinkMouseOver,
-  handleLinkMouseOut
-} from "../components/shared/FormHandlers";
+import { FormInput } from "../components/shared/FormInput";
+import { FormLink } from "../components/shared/FormLink";
+import { MessageDisplay } from "../components/shared/MessageDisplay";
+import { SubmitButton } from "../components/shared/SubmitButton";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -50,7 +43,6 @@ const Login = () => {
     }
   };
 
-
   return (
     <div style={containerStyle}>
       <div style={{ ...cardStyle, maxWidth: "450px" }}>
@@ -62,80 +54,40 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={formStyle}>
-          <div>
-            <label style={labelStyle}>
-              📧 Email
-            </label>
-            <input
-              placeholder="Enter your email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="📧 Email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-          <div>
-            <label style={labelStyle}>
-              🔒 Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="🔒 Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{
-              ...buttonStyle,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-            onMouseOver={(e) => handleButtonMouseOver(e, loading)}
-            onMouseOut={(e) => handleButtonMouseOut(e, loading)}
-          >
-            {loading ? "⏳ Logging in..." : "🚀 Login"}
-          </button>
+          <SubmitButton
+            loading={loading}
+            loadingText="⏳ Logging in..."
+            defaultText="🚀 Login"
+          />
 
-          {message && (
-            <div style={{ 
-              padding: "12px 16px", 
-              borderRadius: "8px",
-              textAlign: "center",
-              background: message.includes("failed") ? "#f8d7da" : "#d4edda",
-              color: message.includes("failed") ? "#721c24" : "#155724",
-              border: `1px solid ${message.includes("failed") ? "#f5c6cb" : "#c3e6cb"}`
-            }}>
-              {message.includes("failed") ? "❌ " : "✅ "}{message}
-            </div>
-          )}
+          <MessageDisplay 
+            message={message} 
+            isError={message.includes("failed")} 
+          />
 
-          <p style={{ textAlign: "center", margin: "10px 0 0 0", color: "#666" }}>
-            Don't have an account?{" "}
-            <a 
-              href="/register" 
-              style={{ 
-                color: "#007bff", 
-                textDecoration: "none",
-                fontWeight: "600"
-              }}
-              onMouseOver={handleLinkMouseOver}
-              onMouseOut={handleLinkMouseOut}
-            >
-              Register here
-            </a>
-          </p>
+          <FormLink
+            text="Don't have an account?"
+            linkText="Register here"
+            href="/register"
+          />
         </form>
       </div>
     </div>

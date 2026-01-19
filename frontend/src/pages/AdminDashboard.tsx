@@ -105,6 +105,19 @@ const AdminDashboard = () => {
     });
   };
 
+  // Reusable mouse event handlers to reduce duplication
+  const handleLogoutButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+    e.currentTarget.style.transform = "scale(1.1)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+  };
+
+  const handleLogoutButtonHoverOut = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.1)";
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+  };
+
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "20px" }}>
       {/* Header */}
@@ -131,16 +144,8 @@ const AdminDashboard = () => {
             transition: "all 0.3s ease",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
           }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = "rgba(0,0,0,0.15)";
-            e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = "rgba(0,0,0,0.1)";
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-          }}
+          onMouseOver={handleLogoutButtonHover}
+          onMouseOut={handleLogoutButtonHoverOut}
         >
           Logout
         </button>

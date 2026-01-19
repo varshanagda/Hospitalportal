@@ -2,22 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
 import {
-  inputStyle,
-  buttonStyle,
   containerStyle,
   cardStyle,
-  labelStyle,
   headingStyle,
   formStyle
 } from "../components/shared/FormStyles";
-import {
-  handleInputFocus,
-  handleInputBlur,
-  handleButtonMouseOver,
-  handleButtonMouseOut,
-  handleLinkMouseOver,
-  handleLinkMouseOut
-} from "../components/shared/FormHandlers";
+import { FormInput } from "../components/shared/FormInput";
+import { FormSelect } from "../components/shared/FormSelect";
+import { FormLink } from "../components/shared/FormLink";
+import { MessageDisplay } from "../components/shared/MessageDisplay";
+import { SubmitButton } from "../components/shared/SubmitButton";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -49,7 +43,6 @@ const Register = () => {
     }
   };
 
-
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
@@ -61,140 +54,62 @@ const Register = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={formStyle}>
-          <div>
-            <label style={labelStyle}>
-              📧 Email
-            </label>
-            <input
-              placeholder="Enter your email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="📧 Email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-          <div>
-            <label style={labelStyle}>
-              🔒 Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="🔒 Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-          <div>
-            <label style={labelStyle}>
-              👤 Full Name
-            </label>
-            <input
-              placeholder="Enter your full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="👤 Full Name"
+            placeholder="Enter your full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
 
-          <div>
-            <label style={labelStyle}>
-              📱 Phone
-            </label>
-            <input
-              placeholder="Enter your phone number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
+          <FormInput
+            label="📱 Phone"
+            placeholder="Enter your phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
-          <div>
-            <label style={labelStyle}>
-              👔 Role
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={{
-                ...inputStyle,
-                background: "white"
-              }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            >
-              <option value="user">👤 User (Patient)</option>
-              <option value="doctor">👨‍⚕️ Doctor</option>
-            </select>
-          </div>
+          <FormSelect
+            label="👔 Role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            options={[
+              { value: "user", label: "👤 User (Patient)" },
+              { value: "doctor", label: "👨‍⚕️ Doctor" }
+            ]}
+          />
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{
-              ...buttonStyle,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-            onMouseOver={(e) => handleButtonMouseOver(e, loading)}
-            onMouseOut={(e) => handleButtonMouseOut(e, loading)}
-          >
-            {loading ? "⏳ Registering..." : "✨ Register"}
-          </button>
+          <SubmitButton
+            loading={loading}
+            loadingText="⏳ Registering..."
+            defaultText="✨ Register"
+          />
 
-          {message && (
-            <div style={{ 
-              padding: "12px 16px", 
-              borderRadius: "8px",
-              textAlign: "center",
-              background: "#d4edda",
-              color: "#155724",
-              border: "1px solid #c3e6cb"
-            }}>
-              ✅ {message}
-            </div>
-          )}
+          <MessageDisplay message={message} isError={false} />
+          <MessageDisplay message={error} isError={true} />
 
-          {error && (
-            <div style={{ 
-              padding: "12px 16px", 
-              borderRadius: "8px",
-              textAlign: "center",
-              background: "#f8d7da",
-              color: "#721c24",
-              border: "1px solid #f5c6cb"
-            }}>
-              ❌ {error}
-            </div>
-          )}
-
-          <p style={{ textAlign: "center", margin: "10px 0 0 0", color: "#666" }}>
-            Already have an account?{" "}
-            <a 
-              href="/login" 
-              style={{ 
-                color: "#007bff", 
-                textDecoration: "none",
-                fontWeight: "600"
-              }}
-              onMouseOver={handleLinkMouseOver}
-              onMouseOut={handleLinkMouseOut}
-            >
-              Login here
-            </a>
-          </p>
+          <FormLink
+            text="Already have an account?"
+            linkText="Login here"
+            href="/login"
+          />
         </form>
       </div>
     </div>

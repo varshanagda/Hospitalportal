@@ -1,16 +1,17 @@
 // Shared form styles to reduce duplication across Login and Register components
+import type { CSSProperties } from "react";
 
-export const inputStyle = {
+export const inputStyle: CSSProperties = {
   padding: "14px 16px",
   fontSize: "16px",
   border: "2px solid #e0e0e0",
   borderRadius: "8px",
   width: "100%",
-  boxSizing: "border-box" as const,
+  boxSizing: "border-box",
   transition: "border-color 0.3s ease"
 };
 
-export const buttonStyle = {
+export const buttonStyle: CSSProperties = {
   padding: "14px 24px",
   fontSize: "16px",
   fontWeight: "600",
@@ -24,7 +25,7 @@ export const buttonStyle = {
   color: "white"
 };
 
-export const containerStyle = {
+export const containerStyle: CSSProperties = {
   minHeight: "100vh",
   display: "flex",
   alignItems: "center",
@@ -34,7 +35,7 @@ export const containerStyle = {
   fontFamily: "Arial, sans-serif"
 };
 
-export const cardStyle = {
+export const cardStyle: CSSProperties = {
   maxWidth: "500px",
   width: "100%",
   padding: "40px",
@@ -43,21 +44,21 @@ export const cardStyle = {
   boxShadow: "0 10px 40px rgba(0,0,0,0.2)"
 };
 
-export const labelStyle = {
+export const labelStyle: CSSProperties = {
   display: "block",
   marginBottom: "8px",
   fontWeight: "600",
   color: "#333"
 };
 
-export const headingStyle = {
+export const headingStyle: CSSProperties = {
   margin: "0 0 10px 0",
   fontSize: "32px",
   color: "#333",
   fontWeight: "700"
 };
 
-export const formStyle = {
+export const formStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: "20px"

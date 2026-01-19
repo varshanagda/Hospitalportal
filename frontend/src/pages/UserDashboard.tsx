@@ -146,6 +146,55 @@ const UserDashboard = () => {
     });
   };
 
+  // Reusable mouse event handlers to reduce duplication
+  const handleTabHover = (tabName: "book" | "appointments") => (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (activeTab !== tabName) {
+      e.currentTarget.style.background = "#f8f9fa";
+      e.currentTarget.style.color = "#333";
+    }
+  };
+
+  const handleTabHoverOut = (tabName: "book" | "appointments") => (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (activeTab !== tabName) {
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.color = "#666";
+    }
+  };
+
+  const handleButtonHoverWithLoading = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+    }
+  };
+
+  const handleButtonHoverOutWithLoading = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+    }
+  };
+
+  const handleButtonHoverWithColor = (hoverColor: string, defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = hoverColor;
+    e.currentTarget.style.transform = "translateY(-2px)";
+  };
+
+  const handleButtonHoverOutWithColor = (defaultColor: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = defaultColor;
+    e.currentTarget.style.transform = "translateY(0)";
+  };
+
+  const handleButtonHoverGeneric = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+  };
+
+  const handleButtonHoverOutGeneric = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+  };
+
   const buttonStyle = {
     padding: "12px 24px",
     fontSize: "16px",
@@ -272,18 +321,8 @@ const UserDashboard = () => {
             transition: "all 0.3s ease",
             boxShadow: activeTab === "book" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
           }}
-          onMouseOver={(e) => {
-            if (activeTab !== "book") {
-              e.currentTarget.style.background = "#f8f9fa";
-              e.currentTarget.style.color = "#333";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (activeTab !== "book") {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#666";
-            }
-          }}
+          onMouseOver={handleTabHover("book")}
+          onMouseOut={handleTabHoverOut("book")}
         >
           📅 Book Appointment
         </button>
@@ -304,18 +343,8 @@ const UserDashboard = () => {
             transition: "all 0.3s ease",
             boxShadow: activeTab === "appointments" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
           }}
-          onMouseOver={(e) => {
-            if (activeTab !== "appointments") {
-              e.currentTarget.style.background = "#f8f9fa";
-              e.currentTarget.style.color = "#333";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (activeTab !== "appointments") {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#666";
-            }
-          }}
+          onMouseOver={handleTabHover("appointments")}
+          onMouseOut={handleTabHoverOut("appointments")}
         >
           📋 My Appointments
         </button>
@@ -453,18 +482,8 @@ const UserDashboard = () => {
                   justifyContent: "center",
                   gap: "8px"
                 }}
-                onMouseOver={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                  }
-                }}
+                onMouseOver={handleButtonHoverWithLoading}
+                onMouseOut={handleButtonHoverOutWithLoading}
               >
                 {loading ? (
                   <>
@@ -488,14 +507,8 @@ const UserDashboard = () => {
                     fontSize: "16px",
                     fontWeight: "600"
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = "#5a6268";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = "#6c757d";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
+                  onMouseOver={handleButtonHoverWithColor("#5a6268", "#6c757d")}
+                  onMouseOut={handleButtonHoverOutWithColor("#6c757d")}
                 >
                   ✕ Clear
                 </button>
@@ -759,14 +772,8 @@ const UserDashboard = () => {
                     justifyContent: "center",
                     gap: "8px"
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                  }}
+                  onMouseOver={handleButtonHoverGeneric}
+                  onMouseOut={handleButtonHoverOutGeneric}
                 >
                   🔍 Find Slots
                 </button>
