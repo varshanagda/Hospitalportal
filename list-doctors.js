@@ -9,7 +9,9 @@ const pool = new Pool({
   port: Number(process.env.DB_PORT) || 5433, // Note: 5433 for localhost, 5432 for docker internal
 });
 
-async function listDoctors() {
+// Use an immediately-invoked async function instead of defining and calling a named async function.
+// This keeps the script self-contained and avoids Sonar warnings about async wrapper functions.
+(async () => {
   try {
     const query = `
       SELECT 
@@ -49,12 +51,9 @@ async function listDoctors() {
     });
 
     console.log(`Total: ${result.rows.length} doctor(s)\n`);
-
   } catch (error) {
     console.error('Error listing doctors:', error.message);
   } finally {
     await pool.end();
   }
-}
-
-listDoctors();
+})();
