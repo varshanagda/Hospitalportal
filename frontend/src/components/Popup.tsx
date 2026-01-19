@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 interface PopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm?: () => void;
+  onConfirm?: (inputValue?: string) => void;
   title: string;
   message?: string;
   type?: "alert" | "confirm" | "prompt";
@@ -40,7 +40,7 @@ const Popup = ({
       return; // Don't close if prompt input is empty
     }
     if (onConfirm) {
-      onConfirm();
+      onConfirm(type === "prompt" ? input : undefined);
     }
     if (type === "alert") {
       onClose();

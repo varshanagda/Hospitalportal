@@ -83,10 +83,11 @@ const UserDashboard = () => {
       title: "Book Appointment",
       message: "Enter reason for appointment:",
       inputPlaceholder: "e.g., Regular checkup, Consultation...",
-      onConfirm: async () => {
-        if (!promptInput.trim()) return;
+      onConfirm: async (inputValue?: string) => {
+        const reason = inputValue || promptInput;
+        if (!reason || !reason.trim()) return;
         try {
-          await bookAppointment({ slot_id: slotId, reason: promptInput });
+          await bookAppointment({ slot_id: slotId, reason: reason.trim() });
           setMessage("Appointment booked successfully!");
           setAvailableSlots([]);
           setSelectedDoctorId(null);
@@ -107,16 +108,18 @@ const UserDashboard = () => {
       title: "Cancel Appointment",
       message: "Are you sure you want to cancel this appointment?",
       onConfirm: () => {
+        setPromptInput("");
         setPopup({
           isOpen: true,
           type: "prompt",
           title: "Cancellation Reason",
           message: "Please enter the reason for cancellation:",
           inputPlaceholder: "Enter cancellation reason...",
-          onConfirm: async () => {
-            if (!promptInput.trim()) return;
+          onConfirm: async (inputValue?: string) => {
+            const reason = inputValue || promptInput;
+            if (!reason || !reason.trim()) return;
             try {
-              await cancelAppointment(id, promptInput);
+              await cancelAppointment(id, reason.trim());
               setMessage("Appointment cancelled");
               loadAppointments();
               setPopup({ ...popup, isOpen: false });

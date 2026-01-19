@@ -510,18 +510,18 @@ const DoctorDashboard = () => {
         </div>
       )}
 
-      {/* Popup Component */}
-      <Popup
-        isOpen={popup.isOpen}
-        onClose={() => setPopup({ ...popup, isOpen: false })}
-        onConfirm={popup.onConfirm}
-        title={popup.title}
-        message={popup.message}
-        type={popup.type}
-        confirmText={popup.type === "confirm" ? "Yes" : "OK"}
-        cancelText="Cancel"
-      />
-    </div>
+    {/* Popup Component */}
+    <Popup
+      isOpen={popup.isOpen}
+      onClose={() => setPopup({ ...popup, isOpen: false })}
+      onConfirm={popup.onConfirm}
+      title={popup.title}
+      message={popup.message}
+      type={popup.type}
+      confirmText={popup.type === "confirm" ? "Yes" : "OK"}
+      cancelText="Cancel"
+    />
+  </div>
   );
 };
 

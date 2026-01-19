@@ -364,6 +364,100 @@ const approveAppointment = async (req, res) => {
 };
 
 /**
+ * Approve appointment by Doctor (Doctor can approve their own appointments)
+ */
+const approveAppointmentByDoctor = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { id } = req.params;
+    const { admin_notes } = req.body;
+    const doctorUserId = req.user.id;
+
+    await client.query('BEGIN');
+
+    // Get doctor ID from user ID
+    const doctorResult = await client.query(
+      `SELECT id FROM doctors WHERE user_id = $1`,
+      [doctorUserId]
+    );
+
+    if (doctorResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: "Doctor profile not found" });
+    }
+
+    const doctorId = doctorResult.rows[0].id;
+
+    // Get appointment details and verify it belongs to this doctor
+    const appointmentResult = await client.query(
+      `SELECT a.*, u.email as user_email, u.full_name as user_name,
+              u2.full_name as doctor_name, d.specialization
+       FROM appointments a
+       JOIN users u ON a.user_id = u.id
+       JOIN doctors d ON a.doctor_id = d.id
+       JOIN users u2 ON d.user_id = u2.id
+       WHERE a.id = $1 AND a.doctor_id = $2`,
+      [id, doctorId]
+    );
+
+    if (appointmentResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: "Appointment not found or you don't have permission to approve it" });
+    }
+
+    const appointment = appointmentResult.rows[0];
+
+    if (appointment.status !== 'pending') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ 
+        message: `Cannot approve appointment with status: ${appointment.status}` 
+      });
+    }
+
+    // Update appointment
+    await client.query(
+      `UPDATE appointments 
+       SET status = 'approved',
+           admin_notes = $1,
+           approved_by = $2,
+           approved_at = NOW(),
+           updated_at = NOW()
+       WHERE id = $3`,
+      [admin_notes, doctorUserId, id]
+    );
+
+    // Log history
+    await client.query(
+      `INSERT INTO appointment_history 
+       (appointment_id, action, old_status, new_status, changed_by, change_reason)
+       VALUES ($1, 'approved', 'pending', 'approved', $2, $3)`,
+      [id, doctorUserId, admin_notes]
+    );
+
+    await client.query('COMMIT');
+
+    // Send approval email
+    await emailService.sendAppointmentApproval(appointment.user_email, {
+      userName: appointment.user_name || appointment.user_email,
+      doctorName: appointment.doctor_name,
+      date: appointment.appointment_date,
+      startTime: appointment.start_time,
+      endTime: appointment.end_time
+    });
+
+    return res.json({ message: "Appointment approved successfully" });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Approve appointment by doctor error:", error);
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+};
+
+/**
  * Cancel appointment
  * User can cancel their own, Doctor can cancel their appointments, Admin can cancel any
  */
@@ -630,6 +724,7 @@ module.exports = {
   getDoctorAppointments,
   getAllAppointments,
   approveAppointment,
+  approveAppointmentByDoctor,
   cancelAppointment,
   rescheduleAppointment,
   getAppointmentHistory
