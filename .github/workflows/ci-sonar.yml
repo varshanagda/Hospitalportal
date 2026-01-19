@@ -134,7 +134,7 @@ jobs:
           path: backend/coverage/
 
       - name: Run SonarQube Scanner for Backend
-        uses: sonarsource/sonarqube-scan-action@SCAN_SHA
+        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9  # v7.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
@@ -200,7 +200,7 @@ jobs:
         if: always()
 
       - name: Run SonarQube Scanner for Frontend
-        uses: sonarsource/sonarqube-scan-action@fd88b7d4b0c8c8b0c8c8b0c8c8b0c8c8b0c8c8b
+        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9  # v7.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
