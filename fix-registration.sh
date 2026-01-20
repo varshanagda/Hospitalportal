@@ -2,7 +2,7 @@
 
 # Quick fix script for registration server error
 
-echo "🔧 Fixing Registration Server Error..."
+echo "🔧 Fixing Registration Server Error..." >&2
 echo ""
 
 # Step 1: Check if using Docker
@@ -13,19 +13,19 @@ if command -v docker &> /dev/null; then
         # Check if tables exist
         TABLES=$(docker exec auth-postgres psql -U postgres -d authdb -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null)
         
-        if [ -z "$TABLES" ] || [ "$TABLES" -eq 0 ]; then
-            echo "⚠️  Database tables not found. Initializing..."
+        if [[ -z "$TABLES" ]] || [[ "$TABLES" -eq 0 ]]; then
+            echo "⚠️  Database tables not found. Initializing..." >&2
             docker exec -i auth-postgres psql -U postgres -d authdb < backend/sql/init.sql 2>&1
-            if [ $? -eq 0 ]; then
+            if [[ $? -eq 0 ]]; then
                 echo "✓ Database tables created successfully"
             else
-                echo "✗ Failed to create tables"
+                echo "✗ Failed to create tables" >&2
             fi
         else
             echo "✓ Database tables exist ($TABLES tables)"
         fi
     else
-        echo "⚠️  Docker PostgreSQL is not running"
+        echo "⚠️  Docker PostgreSQL is not running" >&2
         echo "Starting database..."
         docker-compose up postgres -d
         sleep 3
@@ -38,9 +38,9 @@ if command -v docker &> /dev/null; then
 fi
 
 # Step 2: Check for .env file (for local development)
-if [ ! -f "backend/.env" ]; then
+if [[ ! -f "backend/.env" ]]; then
     echo ""
-    echo "⚠️  No .env file found. Creating one..."
+    echo "⚠️  No .env file found. Creating one..." >&2
     
     # Determine DB_HOST based on Docker setup
     if docker ps | grep -q auth-postgres; then
@@ -61,13 +61,13 @@ NODE_ENV=development
 EOF
     echo "✓ Created backend/.env file"
     echo ""
-    echo "⚠️  If you're using Docker, the environment variables in docker-compose.yml will override these"
+    echo "⚠️  If you're using Docker, the environment variables in docker-compose.yml will override these" >&2
 fi
 
 echo ""
 echo "✅ Fix complete! Try registering again."
 echo ""
-echo "If the error persists, check:"
-echo "1. Backend logs for detailed error messages"
+echo "If the error persists, check:" >&2
+echo "1. Backend logs for detailed error messages" >&2
 echo "2. Database connection: ./check-database.sh"
 echo "3. Restart backend: cd backend && npm run dev"

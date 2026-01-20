@@ -25,7 +25,7 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await login(email, password);
-      if (!response || !response.user) {
+      if (!response?.user) {
         setMessage("Login failed. Invalid response from server.");
         return;
       }

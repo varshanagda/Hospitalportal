@@ -8,7 +8,7 @@ echo ""
 cd backend
 
 # Check if .env file exists
-if [ ! -f .env ]; then
+if [[ ! -f .env ]]; then
     echo "Creating .env file..."
     cat > .env << EOF
 DB_HOST=localhost

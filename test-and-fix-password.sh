@@ -21,7 +21,7 @@ else
 fi
 
 # Test 2: "postgres" password
-if [ -z "$FOUND_PASSWORD" ]; then
+if [[ -z "$FOUND_PASSWORD" ]]; then
     echo -n "Testing 'postgres' password... "
     if PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c "SELECT 1;" &>/dev/null 2>&1; then
         echo "✓ SUCCESS"
@@ -33,7 +33,7 @@ if [ -z "$FOUND_PASSWORD" ]; then
 fi
 
 # Test 3: "admin" password
-if [ -z "$FOUND_PASSWORD" ]; then
+if [[ -z "$FOUND_PASSWORD" ]]; then
     echo -n "Testing 'admin' password... "
     if PGPASSWORD=admin psql -h localhost -U postgres -d postgres -c "SELECT 1;" &>/dev/null 2>&1; then
         echo "✓ SUCCESS"
@@ -46,10 +46,10 @@ fi
 
 echo ""
 
-if [ -z "$FOUND_PASSWORD" ]; then
-    echo "❌ Could not determine PostgreSQL password automatically"
+if [[ -z "$FOUND_PASSWORD" ]]; then
+    echo "❌ Could not determine PostgreSQL password automatically" >&2
     echo ""
-    echo "Please try one of these solutions:"
+    echo "Please try one of these solutions:" >&2
     echo ""
     echo "Option 1: Reset PostgreSQL password to 'postgres'"
     echo "  For macOS with Homebrew:"
@@ -95,12 +95,12 @@ echo "Checking if 'authdb' database exists..."
 if PGPASSWORD="$CORRECT_PASSWORD" psql -h localhost -U postgres -lqt | cut -d \| -f 1 | grep -qw authdb; then
     echo "✓ Database 'authdb' exists"
 else
-    echo "⚠️  Database 'authdb' does NOT exist"
+    echo "⚠️  Database 'authdb' does NOT exist" >&2
     echo "Creating database..."
     if PGPASSWORD="$CORRECT_PASSWORD" createdb -h localhost -U postgres authdb 2>&1; then
         echo "✓ Database 'authdb' created"
     else
-        echo "✗ Failed to create database"
+        echo "✗ Failed to create database" >&2
     fi
 fi
 
@@ -110,17 +110,17 @@ echo ""
 echo "Checking if tables exist..."
 TABLE_COUNT=$(PGPASSWORD="$CORRECT_PASSWORD" psql -h localhost -U postgres -d authdb -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null)
 
-if [ -z "$TABLE_COUNT" ] || [ "$TABLE_COUNT" -eq 0 ]; then
-    echo "⚠️  No tables found. Initializing database..."
-    if [ -f "backend/sql/init.sql" ]; then
+if [[ -z "$TABLE_COUNT" ]] || [[ "$TABLE_COUNT" -eq 0 ]]; then
+    echo "⚠️  No tables found. Initializing database..." >&2
+    if [[ -f "backend/sql/init.sql" ]]; then
         PGPASSWORD="$CORRECT_PASSWORD" psql -h localhost -U postgres -d authdb -f backend/sql/init.sql 2>&1
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
             echo "✓ Database tables initialized"
         else
-            echo "✗ Failed to initialize tables"
+            echo "✗ Failed to initialize tables" >&2
         fi
     else
-        echo "✗ Cannot find backend/sql/init.sql"
+        echo "✗ Cannot find backend/sql/init.sql" >&2
     fi
 else
     echo "✓ Tables exist ($TABLE_COUNT tables found)"
@@ -129,7 +129,7 @@ fi
 echo ""
 echo "✅ Configuration fixed!"
 echo ""
-echo "⚠️  IMPORTANT: Restart your backend server now!"
+echo "⚠️  IMPORTANT: Restart your backend server now!" >&2
 echo "   1. Stop backend (Ctrl+C in terminal where it's running)"
 echo "   2. Restart: cd backend && npm run dev"
 echo ""

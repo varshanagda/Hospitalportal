@@ -26,7 +26,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.id) {
+    if (!decoded?.id) {
       return res.status(401).json({ message: "Invalid token payload" });
     }
     
@@ -48,7 +48,7 @@ const authMiddleware = (req, res, next) => {
 const requireRole = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
-      if (!req.user || !req.user.id) {
+      if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 

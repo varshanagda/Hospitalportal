@@ -15,7 +15,7 @@ echo "❌ Backend is NOT running. Starting now..."
 echo ""
 
 # Check if we're in the right directory
-if [ ! -d "backend" ]; then
+if [[ ! -d "backend" ]]; then
     echo "Error: Please run this script from the project root directory"
     echo "   cd /Users/varshanagda/ProjectAuth"
     exit 1
@@ -43,7 +43,7 @@ else
     cd backend
     
     # Check if .env exists
-    if [ ! -f .env ]; then
+    if [[ ! -f .env ]]; then
         echo "Creating .env file..."
         cat > .env << 'EOF'
 DB_HOST=localhost
@@ -58,7 +58,7 @@ EOF
     fi
     
     # Check if node_modules exists
-    if [ ! -d "node_modules" ]; then
+    if [[ ! -d "node_modules" ]]; then
         echo "Installing dependencies..."
         npm install
     fi

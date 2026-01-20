@@ -35,13 +35,13 @@ echo "3. Testing if users table exists..."
 if command -v docker &> /dev/null && docker ps | grep -q auth-postgres; then
     TABLE_EXISTS=$(docker exec auth-postgres psql -U postgres -d authdb -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');" 2>/dev/null)
     
-    if [ "$TABLE_EXISTS" == "t" ]; then
+    if [[ "$TABLE_EXISTS" == "t" ]]; then
         echo "   ✓ Users table exists"
     else
         echo "   ✗ Users table does NOT exist"
         echo "   Initializing database..."
         docker exec -i auth-postgres psql -U postgres -d authdb < backend/sql/init.sql 2>&1
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
             echo "   ✓ Database initialized successfully"
         else
             echo "   ✗ Failed to initialize database"

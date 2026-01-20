@@ -88,24 +88,27 @@ const logAppointmentHistory = async (client, appointmentId, action, oldStatus, n
 };
 
 /**
- * Helper: Update slot bookings count
+ * Helper: Increment slot bookings count
  */
-const updateSlotBookings = async (client, slotId, increment = true) => {
-  if (increment) {
-    return await client.query(
-      `UPDATE slots 
-       SET current_bookings = current_bookings + 1
-       WHERE id = $1`,
-      [slotId]
-    );
-  } else {
-    return await client.query(
-      `UPDATE slots 
-       SET current_bookings = GREATEST(0, current_bookings - 1)
-       WHERE id = $1`,
-      [slotId]
-    );
-  }
+const incrementSlotBookings = async (client, slotId) => {
+  return await client.query(
+    `UPDATE slots 
+     SET current_bookings = current_bookings + 1
+     WHERE id = $1`,
+    [slotId]
+  );
+};
+
+/**
+ * Helper: Decrement slot bookings count
+ */
+const decrementSlotBookings = async (client, slotId) => {
+  return await client.query(
+    `UPDATE slots 
+     SET current_bookings = GREATEST(0, current_bookings - 1)
+     WHERE id = $1`,
+    [slotId]
+  );
 };
 
 /**
@@ -567,7 +570,7 @@ const cancelAppointment = async (req, res) => {
 
     // Free up the slot
     if (appointment.slot_id) {
-      await updateSlotBookings(client, appointment.slot_id, false);
+      await decrementSlotBookings(client, appointment.slot_id);
     }
 
     // Log history
@@ -656,7 +659,7 @@ const rescheduleAppointment = async (req, res) => {
 
     // Free up old slot
     if (appointment.slot_id) {
-      await updateSlotBookings(client, appointment.slot_id, false);
+      await decrementSlotBookings(client, appointment.slot_id);
     }
 
     // Update appointment
@@ -673,7 +676,7 @@ const rescheduleAppointment = async (req, res) => {
     );
 
     // Book new slot
-    await updateSlotBookings(client, new_slot_id, true);
+    await incrementSlotBookings(client, new_slot_id);
 
     // Log history
     await logAppointmentHistory(client, id, 'rescheduled', appointment.status, 'pending', userId, 'Appointment rescheduled');

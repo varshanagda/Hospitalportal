@@ -28,7 +28,8 @@ export const getErrorMessage = (error: unknown, defaultMessage: string): string 
  * Safely log errors without exposing sensitive information
  */
 export const logError = (error: unknown, context: string): void => {
-  if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+  // Use Vite's import.meta.env for development check
+  if (import.meta.env.DEV) {
     console.error(`[${context}]`, error);
   }
   // In production, you might want to send to error tracking service

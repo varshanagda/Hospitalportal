@@ -91,7 +91,7 @@ const UserDashboard = () => {
       inputPlaceholder: "e.g., Regular checkup, Consultation...",
       onConfirm: async (inputValue?: string) => {
         const reason = inputValue || promptInput;
-        if (!reason || !reason.trim()) return;
+        if (!reason?.trim()) return;
         try {
           await bookAppointment({ slot_id: slotId, reason: reason.trim() });
           setMessage("Appointment booked successfully!");
@@ -124,7 +124,7 @@ const UserDashboard = () => {
           inputPlaceholder: "Enter cancellation reason...",
           onConfirm: async (inputValue?: string) => {
             const reason = inputValue || promptInput;
-            if (!reason || !reason.trim()) return;
+            if (!reason?.trim()) return;
             try {
               await cancelAppointment(id, reason.trim());
               setMessage("Appointment cancelled");

@@ -24,7 +24,7 @@ module.exports = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.id || !decoded.email || !decoded.role) {
+    if (!decoded?.id || !decoded?.email || !decoded?.role) {
       return res.status(401).json({ message: "Invalid token payload" });
     }
     
