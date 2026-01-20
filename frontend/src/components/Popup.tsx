@@ -35,6 +35,12 @@ const Popup = ({
 
   if (!isOpen) return null;
 
+  const getIconByType = () => {
+    if (type === "confirm") return "⚠️";
+    if (type === "prompt") return "✏️";
+    return "ℹ️";
+  };
+
   const handleConfirm = () => {
     if (type === "prompt" && !input.trim()) {
       return; // Don't close if prompt input is empty
@@ -110,7 +116,7 @@ const Popup = ({
             fontSize: "32px",
             margin: "0 auto 16px"
           }}>
-            {type === "confirm" ? "⚠️" : type === "prompt" ? "✏️" : "ℹ️"}
+            {getIconByType()}
           </div>
           <h2 style={{
             margin: 0,

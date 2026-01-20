@@ -238,6 +238,25 @@ const UserDashboard = () => {
     e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
   };
 
+  const getTabButtonStyle = (tabName: "book" | "appointments") => {
+    const isActive = activeTab === tabName;
+    return {
+      flex: 1,
+      padding: tabName === "book" ? "10px 14px" : "16px 24px",
+      border: "none",
+      background: isActive 
+        ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+        : "transparent",
+      cursor: "pointer" as const,
+      borderRadius: "12px",
+      fontWeight: isActive ? "700" : "500",
+      color: isActive ? "white" : "#666",
+      fontSize: "16px",
+      transition: "all 0.3s ease",
+      boxShadow: isActive ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
+    };
+  };
+
   const buttonStyle = {
     padding: "12px 24px",
     fontSize: "16px",
@@ -359,21 +378,7 @@ const UserDashboard = () => {
       }}>
         <button
           onClick={() => setActiveTab("book")}
-          style={{
-            flex: 1,
-            padding: "10px 14px",
-            border: "none",
-            background: activeTab === "book" 
-              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
-              : "transparent",
-            cursor: "pointer",
-            borderRadius: "12px",
-            fontWeight: activeTab === "book" ? "700" : "500",
-            color: activeTab === "book" ? "white" : "#666",
-            fontSize: "16px",
-            transition: "all 0.3s ease",
-            boxShadow: activeTab === "book" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
-          }}
+          style={getTabButtonStyle("book")}
           onMouseOver={handleTabHover("book")}
           onMouseOut={handleTabHoverOut("book")}
           onFocus={handleTabFocus("book")}
@@ -383,21 +388,7 @@ const UserDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("appointments")}
-          style={{
-            flex: 1,
-            padding: "16px 24px",
-            border: "none",
-            background: activeTab === "appointments" 
-              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
-              : "transparent",
-            cursor: "pointer",
-            borderRadius: "12px",
-            fontWeight: activeTab === "appointments" ? "700" : "500",
-            color: activeTab === "appointments" ? "white" : "#666",
-            fontSize: "16px",
-            transition: "all 0.3s ease",
-            boxShadow: activeTab === "appointments" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none"
-          }}
+          style={getTabButtonStyle("appointments")}
           onMouseOver={handleTabHover("appointments")}
           onMouseOut={handleTabHoverOut("appointments")}
           onFocus={handleTabFocus("appointments")}

@@ -83,7 +83,11 @@ export const updateAppointmentStatus = async (id: number, status: string, notes?
   let endpoint: string;
   if (status === "approved") {
     // Use doctor-specific endpoint if user is a doctor, otherwise use admin endpoint
-    endpoint = userRole === "doctor" ? "approve-doctor" : "approve";
+    if (userRole === "doctor") {
+      endpoint = "approve-doctor";
+    } else {
+      endpoint = "approve";
+    }
   } else if (status === "completed") {
     endpoint = "complete";
   } else {
@@ -104,7 +108,12 @@ export const approveAppointment = async (id: number, adminNotes?: string) => {
   const userRole = user.role;
   
   // Use doctor-specific endpoint if user is a doctor, otherwise use admin endpoint
-  const endpoint = userRole === "doctor" ? "approve-doctor" : "approve";
+  let endpoint: string;
+  if (userRole === "doctor") {
+    endpoint = "approve-doctor";
+  } else {
+    endpoint = "approve";
+  }
   
   const res = await axios.put(
     `${API_URL}/${id}/${endpoint}`,
