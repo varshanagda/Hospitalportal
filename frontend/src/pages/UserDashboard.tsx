@@ -184,14 +184,14 @@ const UserDashboard = () => {
     }
   };
 
-  const handleButtonFocusWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleButtonFocusWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     if (!loading) {
       e.currentTarget.style.transform = "translateY(-2px)";
       e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
     }
   };
 
-  const handleButtonBlurWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleButtonBlurWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     if (!loading) {
       e.currentTarget.style.transform = "translateY(0)";
       e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";

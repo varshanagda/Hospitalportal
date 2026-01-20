@@ -8,33 +8,31 @@ process.env.DB_PORT = process.env.DB_PORT || '5433'; // Use 5433 for localhost (
 
 const pool = require('./src/db');
 
-async function listDoctors() {
-  try {
-    const query = `
-      SELECT 
-          d.id as doctor_id,
-          u.id as user_id,
-          u.email,
-          u.full_name as doctor_name,
-          u.phone,
-          d.specialization,
-          d.qualification,
-          d.experience_years,
-          d.consultation_fee,
-          d.is_approved,
-          d.created_at
-      FROM doctors d
-      JOIN users u ON d.user_id = u.id
-      ORDER BY d.created_at DESC;
-    `;
+// Use top-level await instead of async function (ES2022)
+try {
+  const query = `
+    SELECT 
+        d.id as doctor_id,
+        u.id as user_id,
+        u.email,
+        u.full_name as doctor_name,
+        u.phone,
+        d.specialization,
+        d.qualification,
+        d.experience_years,
+        d.consultation_fee,
+        d.is_approved,
+        d.created_at
+    FROM doctors d
+    JOIN users u ON d.user_id = u.id
+    ORDER BY d.created_at DESC;
+  `;
 
-    const result = await pool.query(query);
+  const result = await pool.query(query);
 
-    if (result.rows.length === 0) {
-      console.log('\n❌ No doctors found in the database.\n');
-      return;
-    }
-
+  if (result.rows.length === 0) {
+    console.log('\n❌ No doctors found in the database.\n');
+  } else {
     console.log('\n=== All Doctors in Database ===\n');
     result.rows.forEach((doctor, index) => {
       console.log(`${index + 1}. ${doctor.doctor_name || 'N/A'}`);
@@ -51,14 +49,11 @@ async function listDoctors() {
     });
 
     console.log(`\n📊 Total: ${result.rows.length} doctor(s)\n`);
-
-  } catch (error) {
-    console.error('❌ Error listing doctors:', error.message);
-    console.error(error.stack);
-  } finally {
-    await pool.end();
-    process.exit(0);
   }
+} catch (error) {
+  console.error('❌ Error listing doctors:', error.message);
+  console.error(error.stack);
+} finally {
+  await pool.end();
+  process.exit(0);
 }
-
-listDoctors();

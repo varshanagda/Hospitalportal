@@ -16,8 +16,8 @@ echo ""
 
 # Check if we're in the right directory
 if [[ ! -d "backend" ]]; then
-    echo "Error: Please run this script from the project root directory"
-    echo "   cd /Users/varshanagda/ProjectAuth"
+    echo "Error: Please run this script from the project root directory" >&2
+    echo "   cd /Users/varshanagda/ProjectAuth" >&2
     exit 1
 fi
 

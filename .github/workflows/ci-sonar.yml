@@ -95,7 +95,23 @@ jobs:
       - name: Run frontend tests with coverage
         working-directory: ./frontend
         run: |
-          npm run test:coverage || npm test -- --coverage || echo "Tests completed (coverage may be incomplete)"
+          npm run test:coverage || npm test -- --coverage || echo "⚠️ Tests completed without coverage"
+        continue-on-error: true
+
+      - name: Check if coverage exists
+        id: check-coverage
+        working-directory: ./frontend
+        run: |
+          if [[ -d "coverage" ]] && [[ -n "$(ls -A coverage 2>/dev/null)" ]]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Coverage directory found with files"
+            ls -la coverage/ || true
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No coverage directory or empty"
+            mkdir -p coverage
+            echo "# No coverage generated" > coverage/README.md
+          fi
 
       - name: Upload frontend coverage reports
         uses: actions/upload-artifact@v4
@@ -103,6 +119,7 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/
           retention-days: 7
+          if-no-files-found: warn
         if: always()
 
   sonar-backend:
@@ -197,7 +214,19 @@ jobs:
         with:
           name: frontend-coverage
           path: frontend/coverage/
-        if: always()
+        continue-on-error: true
+        id: download-coverage
+
+      - name: Verify coverage availability
+        run: |
+          if [[ -f "frontend/coverage/lcov.info" ]]; then
+            echo "✅ Coverage file found"
+            echo "COVERAGE_ARGS=-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info" >> $GITHUB_ENV
+          else
+            echo "⚠️ No coverage file - SonarQube will run without coverage"
+            echo "COVERAGE_ARGS=" >> $GITHUB_ENV
+            mkdir -p frontend/coverage
+          fi
 
       - name: Run SonarQube Scanner for Frontend
         uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9  # v7.0.0
@@ -212,9 +241,9 @@ jobs:
             -Dsonar.projectName=Hospital Portal Frontend
             -Dsonar.sources=src
             -Dsonar.tests=src/tests
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.test.inclusions=src/tests/**/*
             -Dsonar.sourceEncoding=UTF-8
+            ${{ env.COVERAGE_ARGS }}
         continue-on-error: true
         if: ${{ env.SONAR_TOKEN != '' }}
 

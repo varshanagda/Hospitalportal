@@ -68,8 +68,8 @@ if echo "$REGISTER_TEST" | grep -q "already exists\|successfully"; then
     echo "   ✓ Registration endpoint is working"
 else
     if echo "$REGISTER_TEST" | grep -q "error\|Error"; then
-        echo "   ✗ Registration endpoint has an error"
-        echo "   Check backend logs for details"
+        echo "   ✗ Registration endpoint has an error" >&2
+        echo "   Check backend logs for details" >&2
     fi
 fi
 

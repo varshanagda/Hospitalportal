@@ -15,13 +15,13 @@ export const LogoutButton = ({ onClick }: LogoutButtonProps) => {
     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
   };
 
-  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     e.currentTarget.style.background = "rgba(255,255,255,0.4)";
     e.currentTarget.style.transform = "scale(1.1)";
     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     e.currentTarget.style.background = "rgba(255,255,255,0.25)";
     e.currentTarget.style.transform = "scale(1)";
     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";

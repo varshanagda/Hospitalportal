@@ -118,7 +118,7 @@ router.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
-    if (!user || !user.password) {
+    if (!user?.password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
@@ -169,7 +169,7 @@ router.post("/login", async (req, res) => {
 
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
-    if (!req.user || !req.user.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ message: "User not authenticated" });
     }
 

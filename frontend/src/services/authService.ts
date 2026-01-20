@@ -97,7 +97,8 @@ export const getCurrentUser = (): User | null => {
     
     return parsed as User;
   } catch (error: unknown) {
-    // Invalid JSON or other error, clear corrupted data
+    // Invalid JSON or other error, clear corrupted data and log for debugging
+    console.warn("Failed to parse user data:", error instanceof Error ? error.message : "Unknown error");
     localStorage.removeItem("user");
     return null;
   }

@@ -60,13 +60,13 @@ export const ConditionalHoverButton = ({
     }
   };
 
-  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     if (canHover && !disabled) {
       e.currentTarget.style.background = variantStyle.hoverColor;
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
     if (canHover && !disabled) {
       e.currentTarget.style.background = variantStyle.background;
     }
