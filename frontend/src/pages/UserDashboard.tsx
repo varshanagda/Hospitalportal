@@ -156,6 +156,20 @@ const UserDashboard = () => {
     }
   };
 
+  const handleTabFocus = (tabName: "book" | "appointments") => (e: React.FocusEvent<HTMLButtonElement>) => {
+    if (activeTab !== tabName) {
+      e.currentTarget.style.background = "#f8f9fa";
+      e.currentTarget.style.color = "#333";
+    }
+  };
+
+  const handleTabBlur = (tabName: "book" | "appointments") => (e: React.FocusEvent<HTMLButtonElement>) => {
+    if (activeTab !== tabName) {
+      e.currentTarget.style.background = "transparent";
+      e.currentTarget.style.color = "#666";
+    }
+  };
+
   const handleButtonHoverWithLoading = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!loading) {
       e.currentTarget.style.transform = "translateY(-2px)";
@@ -164,6 +178,20 @@ const UserDashboard = () => {
   };
 
   const handleButtonHoverOutWithLoading = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+    }
+  };
+
+  const handleButtonFocusWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => {
+    if (!loading) {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+    }
+  };
+
+  const handleButtonBlurWithLoading = (e: React.FocusEvent<HTMLButtonElement>) => {
     if (!loading) {
       e.currentTarget.style.transform = "translateY(0)";
       e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
@@ -180,12 +208,32 @@ const UserDashboard = () => {
     e.currentTarget.style.transform = "translateY(0)";
   };
 
+  const handleButtonFocusWithColor = (hoverColor: string) => (e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = hoverColor;
+    e.currentTarget.style.transform = "translateY(-2px)";
+  };
+
+  const handleButtonBlurWithColor = (defaultColor: string) => (e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = defaultColor;
+    e.currentTarget.style.transform = "translateY(0)";
+  };
+
   const handleButtonHoverGeneric = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.style.transform = "translateY(-2px)";
     e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
   };
 
   const handleButtonHoverOutGeneric = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+  };
+
+  const handleButtonFocusGeneric = (e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+  };
+
+  const handleButtonBlurGeneric = (e: React.FocusEvent<HTMLButtonElement>) => {
     e.currentTarget.style.transform = "translateY(0)";
     e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
   };
@@ -328,8 +376,8 @@ const UserDashboard = () => {
           }}
           onMouseOver={handleTabHover("book")}
           onMouseOut={handleTabHoverOut("book")}
-          onFocus={handleTabHover("book")}
-          onBlur={handleTabHoverOut("book")}
+          onFocus={handleTabFocus("book")}
+          onBlur={handleTabBlur("book")}
         >
           📅 Book Appointment
         </button>
@@ -352,8 +400,8 @@ const UserDashboard = () => {
           }}
           onMouseOver={handleTabHover("appointments")}
           onMouseOut={handleTabHoverOut("appointments")}
-          onFocus={handleTabHover("appointments")}
-          onBlur={handleTabHoverOut("appointments")}
+          onFocus={handleTabFocus("appointments")}
+          onBlur={handleTabBlur("appointments")}
         >
           📋 My Appointments
         </button>
@@ -460,8 +508,8 @@ const UserDashboard = () => {
                 }}
                 onMouseOver={handleButtonHoverWithLoading}
                 onMouseOut={handleButtonHoverOutWithLoading}
-                onFocus={handleButtonHoverWithLoading}
-                onBlur={handleButtonHoverOutWithLoading}
+                onFocus={handleButtonFocusWithLoading}
+                onBlur={handleButtonBlurWithLoading}
               >
                 {loading ? (
                   <>
@@ -487,8 +535,8 @@ const UserDashboard = () => {
                   }}
                   onMouseOver={handleButtonHoverWithColor("#5a6268")}
                   onMouseOut={handleButtonHoverOutWithColor("#6c757d")}
-                  onFocus={handleButtonHoverWithColor("#5a6268")}
-                  onBlur={handleButtonHoverOutWithColor("#6c757d")}
+                  onFocus={handleButtonFocusWithColor("#5a6268")}
+                  onBlur={handleButtonBlurWithColor("#6c757d")}
                 >
                   ✕ Clear
                 </button>
@@ -775,8 +823,8 @@ const UserDashboard = () => {
                   }}
                   onMouseOver={handleButtonHoverGeneric}
                   onMouseOut={handleButtonHoverOutGeneric}
-                  onFocus={handleButtonHoverGeneric}
-                  onBlur={handleButtonHoverOutGeneric}
+                  onFocus={handleButtonFocusGeneric}
+                  onBlur={handleButtonBlurGeneric}
                 >
                   🔍 Find Slots
                 </button>
