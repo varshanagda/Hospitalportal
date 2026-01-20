@@ -8,9 +8,26 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+    
     getProfile()
-      .then((res) => setUser(res.data.user))
-      .catch(() => setError("Unauthorized"));
+      .then((res) => {
+        if (isMounted && res?.data?.user) {
+          setUser(res.data.user);
+        } else if (isMounted) {
+          setError("Invalid response from server");
+        }
+      })
+      .catch((error: unknown) => {
+        if (isMounted) {
+          const errorMessage = error instanceof Error ? error.message : "Unauthorized";
+          setError(errorMessage);
+        }
+      });
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLogout = () => {

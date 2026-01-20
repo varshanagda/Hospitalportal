@@ -13,6 +13,7 @@ router.get("/profile/me", authMiddleware, requireDoctor, doctorController.getDoc
 router.get("/stats/me", authMiddleware, requireDoctor, doctorController.getDoctorStats);
 
 // Admin routes
+router.post("/", authMiddleware, requireAdmin, doctorController.createDoctor);
 router.put("/:id/approve", authMiddleware, requireAdmin, doctorController.approveDoctor);
 
 module.exports = router;

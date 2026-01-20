@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { logout, getCurrentUser } from "../services/authService";
+import { getCurrentUser } from "../services/authService";
 import { getAllAppointments, updateAppointmentStatus, type Appointment } from "../services/appointmentService";
 import { getAllDoctors, createDoctor, type Doctor } from "../services/doctorService";
+import Popup from "../components/Popup";
+import { useLogoutHandler } from "../hooks/useLogout";
+import { DashboardMessage } from "../components/shared/DashboardMessage";
+import { StatusBadge } from "../components/shared/StatusBadge";
+import { AdminFormInput } from "../components/shared/AdminFormInput";
+import { AdminButton } from "../components/shared/AdminButton";
+import { Card } from "../components/shared/Card";
+import { getErrorMessage, logError } from "../utils/errorHandler";
 
 const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -10,6 +17,17 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<"appointments" | "doctors">("appointments");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [popup, setPopup] = useState<{
+    isOpen: boolean;
+    type: "alert" | "confirm" | "prompt";
+    title: string;
+    message?: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "alert",
+    title: ""
+  });
   
   // New doctor form
   const [newDoctor, setNewDoctor] = useState({
@@ -23,8 +41,8 @@ const AdminDashboard = () => {
     consultation_fee: 0
   });
 
-  const navigate = useNavigate();
   const user = getCurrentUser();
+  const handleLogout = useLogoutHandler(setPopup);
 
   useEffect(() => {
     loadAppointments();
@@ -35,8 +53,9 @@ const AdminDashboard = () => {
     try {
       const res = await getAllAppointments();
       setAppointments(res.appointments);
-    } catch (_err: any) {
-      setError("Failed to load appointments");
+    } catch (error: unknown) {
+      logError(error, "loadAppointments");
+      setError(getErrorMessage(error, "Failed to load appointments"));
     }
   };
 
@@ -44,8 +63,9 @@ const AdminDashboard = () => {
     try {
       const res = await getAllDoctors("", false);
       setDoctors(res.doctors);
-    } catch (_err: any) {
-      setError("Failed to load doctors");
+    } catch (error: unknown) {
+      logError(error, "loadDoctors");
+      setError(getErrorMessage(error, "Failed to load doctors"));
     }
   };
 
@@ -54,8 +74,9 @@ const AdminDashboard = () => {
       await updateAppointmentStatus(id, status);
       setMessage(`Appointment ${status}`);
       loadAppointments();
-    } catch (_err: any) {
-      setError("Failed to update status");
+    } catch (error: unknown) {
+      logError(error, "updateAppointmentStatus");
+      setError(getErrorMessage(error, "Failed to update status"));
     }
   };
 
@@ -75,16 +96,35 @@ const AdminDashboard = () => {
         consultation_fee: 0
       });
       loadDoctors();
-    } catch (_err: any) {
-      setError("Failed to create doctor");
+    } catch (error: unknown) {
+      logError(error, "createDoctor");
+      setError(getErrorMessage(error, "Failed to create doctor"));
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("Logout?")) {
-      logout();
-      navigate("/login");
-    }
+  // Reusable mouse event handlers to reduce duplication
+  const handleLogoutButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+    e.currentTarget.style.transform = "scale(1.1)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+  };
+
+  const handleLogoutButtonHoverOut = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.1)";
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+  };
+
+  const handleLogoutButtonFocus = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
+    e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+    e.currentTarget.style.transform = "scale(1.1)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+  };
+
+  const handleLogoutButtonBlur = (e: React.FocusEvent<HTMLButtonElement>) => { // NOSONAR - Intentional for accessibility
+    e.currentTarget.style.background = "rgba(0,0,0,0.1)";
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
   };
 
   return (
@@ -95,7 +135,29 @@ const AdminDashboard = () => {
           <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
           <p style={{ margin: "5px 0 0 0", color: "#666" }}>Welcome, {user?.full_name || user?.email}</p>
         </div>
-        <button onClick={handleLogout} style={{ padding: "10px 20px", cursor: "pointer" }}>
+        <button 
+          onClick={handleLogout} 
+          style={{
+            background: "rgba(0,0,0,0.1)",
+            color: "#333",
+            border: "1px solid rgba(0,0,0,0.2)",
+            width: "50px",
+            height: "50px",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "11px",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          }}
+          onMouseOver={handleLogoutButtonHover}
+          onMouseOut={handleLogoutButtonHoverOut}
+          onFocus={handleLogoutButtonFocus}
+          onBlur={handleLogoutButtonBlur}
+        >
           Logout
         </button>
       </div>
@@ -131,8 +193,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Messages */}
-      {message && <div style={{ padding: "10px", background: "#d4edda", color: "#155724", marginBottom: "15px", borderRadius: "5px" }}>{message}</div>}
-      {error && <div style={{ padding: "10px", background: "#f8d7da", color: "#721c24", marginBottom: "15px", borderRadius: "5px" }}>{error}</div>}
+      <DashboardMessage message={message} error={error} variant="simple" />
 
       {/* Appointments Tab */}
       {activeTab === "appointments" && (
@@ -143,15 +204,7 @@ const AdminDashboard = () => {
           ) : (
             <div>
               {appointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  style={{
-                    padding: "15px",
-                    marginBottom: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px"
-                  }}
-                >
+                <Card key={apt.id} variant="appointment">
                   <div style={{ marginBottom: "10px" }}>
                     <h4 style={{ margin: "0 0 10px 0" }}>
                       {apt.patient_name} → Dr. {apt.doctor_name}
@@ -162,41 +215,26 @@ const AdminDashboard = () => {
                     <p style={{ margin: "5px 0" }}><strong>Reason:</strong> {apt.reason}</p>
                     <p style={{ margin: "5px 0" }}>
                       <strong>Status:</strong>{" "}
-                      <span
-                        style={{
-                          padding: "3px 8px",
-                          borderRadius: "3px",
-                          background:
-                            apt.status === "approved" ? "#d4edda" :
-                            apt.status === "pending" ? "#fff3cd" :
-                            apt.status === "completed" ? "#d1ecf1" : "#f8d7da",
-                          color:
-                            apt.status === "approved" ? "#155724" :
-                            apt.status === "pending" ? "#856404" :
-                            apt.status === "completed" ? "#0c5460" : "#721c24"
-                        }}
-                      >
-                        {apt.status}
-                      </span>
+                      <StatusBadge status={apt.status} variant="simple" />
                     </p>
                   </div>
                   {apt.status === "pending" && (
                     <div style={{ display: "flex", gap: "10px" }}>
-                      <button
+                      <AdminButton
                         onClick={() => handleUpdateStatus(apt.id, "approved")}
-                        style={{ padding: "8px 16px", background: "#28a745", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        variant="success"
                       >
                         Approve
-                      </button>
-                      <button
+                      </AdminButton>
+                      <AdminButton
                         onClick={() => handleUpdateStatus(apt.id, "cancelled")}
-                        style={{ padding: "8px 16px", background: "#dc3545", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
+                        variant="danger"
                       >
                         Reject
-                      </button>
+                      </AdminButton>
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -209,70 +247,62 @@ const AdminDashboard = () => {
           <h3>Add New Doctor</h3>
           <form onSubmit={handleCreateDoctor} style={{ marginBottom: "30px" }}>
             <div style={{ display: "grid", gap: "10px", marginBottom: "10px" }}>
-              <input
+              <AdminFormInput
                 type="email"
                 placeholder="Email"
                 value={newDoctor.email}
                 onChange={(e) => setNewDoctor({ ...newDoctor, email: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="password"
                 placeholder="Password"
                 value={newDoctor.password}
                 onChange={(e) => setNewDoctor({ ...newDoctor, password: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Full Name"
                 value={newDoctor.full_name}
                 onChange={(e) => setNewDoctor({ ...newDoctor, full_name: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="tel"
                 placeholder="Phone"
                 value={newDoctor.phone}
                 onChange={(e) => setNewDoctor({ ...newDoctor, phone: e.target.value })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Specialization"
                 value={newDoctor.specialization}
                 onChange={(e) => setNewDoctor({ ...newDoctor, specialization: e.target.value })}
                 required
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="text"
                 placeholder="Qualification"
                 value={newDoctor.qualification}
                 onChange={(e) => setNewDoctor({ ...newDoctor, qualification: e.target.value })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="number"
                 placeholder="Experience (years)"
                 value={newDoctor.experience_years || ""}
                 onChange={(e) => setNewDoctor({ ...newDoctor, experience_years: parseInt(e.target.value) || 0 })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
-              <input
+              <AdminFormInput
                 type="number"
                 placeholder="Consultation Fee"
                 value={newDoctor.consultation_fee || ""}
                 onChange={(e) => setNewDoctor({ ...newDoctor, consultation_fee: parseFloat(e.target.value) || 0 })}
-                style={{ padding: "10px", fontSize: "16px" }}
               />
             </div>
-            <button type="submit" style={{ padding: "10px 20px", cursor: "pointer", background: "#007bff", color: "white", border: "none", borderRadius: "5px" }}>
+            <AdminButton type="submit">
               Add Doctor
-            </button>
+            </AdminButton>
           </form>
 
           <h3>All Doctors</h3>
@@ -281,15 +311,7 @@ const AdminDashboard = () => {
           ) : (
             <div>
               {doctors.map((doctor) => (
-                <div
-                  key={doctor.id}
-                  style={{
-                    padding: "15px",
-                    marginBottom: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px"
-                  }}
-                >
+                <Card key={doctor.id} variant="doctor">
                   <h4 style={{ margin: "0 0 10px 0" }}>Dr. {doctor.full_name}</h4>
                   <p style={{ margin: "5px 0" }}><strong>Email:</strong> {doctor.email}</p>
                   <p style={{ margin: "5px 0" }}><strong>Specialization:</strong> {doctor.specialization}</p>
@@ -302,13 +324,25 @@ const AdminDashboard = () => {
                       {doctor.is_available ? "Yes" : "No"}
                     </span>
                   </p>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
       )}
-    </div>
+
+    {/* Popup Component */}
+    <Popup
+      isOpen={popup.isOpen}
+      onClose={() => setPopup({ ...popup, isOpen: false })}
+      onConfirm={popup.onConfirm}
+      title={popup.title}
+      message={popup.message}
+      type={popup.type}
+      confirmText={popup.type === "confirm" ? "Yes" : "OK"}
+      cancelText="Cancel"
+    />
+  </div>
   );
 };
 

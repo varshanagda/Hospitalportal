@@ -76,7 +76,24 @@ export const getAllAppointments = async (status?: string, date?: string) => {
 };
 
 export const updateAppointmentStatus = async (id: number, status: string, notes?: string) => {
-  const endpoint = status === "approved" ? "approve" : status === "completed" ? "complete" : "cancel";
+  // Get current user role to determine the correct endpoint
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userRole = user.role;
+  
+  let endpoint: string;
+  if (status === "approved") {
+    // Use doctor-specific endpoint if user is a doctor, otherwise use admin endpoint
+    if (userRole === "doctor") {
+      endpoint = "approve-doctor";
+    } else {
+      endpoint = "approve";
+    }
+  } else if (status === "completed") {
+    endpoint = "complete";
+  } else {
+    endpoint = "cancel";
+  }
+  
   const res = await axios.put(
     `${API_URL}/${id}/${endpoint}`,
     { admin_notes: notes, cancellation_reason: notes },
@@ -86,8 +103,20 @@ export const updateAppointmentStatus = async (id: number, status: string, notes?
 };
 
 export const approveAppointment = async (id: number, adminNotes?: string) => {
+  // Get current user role to determine the correct endpoint
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userRole = user.role;
+  
+  // Use doctor-specific endpoint if user is a doctor, otherwise use admin endpoint
+  let endpoint: string;
+  if (userRole === "doctor") {
+    endpoint = "approve-doctor";
+  } else {
+    endpoint = "approve";
+  }
+  
   const res = await axios.put(
-    `${API_URL}/${id}/approve`,
+    `${API_URL}/${id}/${endpoint}`,
     { admin_notes: adminNotes },
     { headers: getAuthHeaders() }
   );

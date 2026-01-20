@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
+import {
+  containerStyle,
+  cardStyle,
+  headingStyle,
+  formStyle
+} from "../components/shared/FormStyles";
+import { FormInput } from "../components/shared/FormInput";
+import { FormSelect } from "../components/shared/FormSelect";
+import { FormLink } from "../components/shared/FormLink";
+import { MessageDisplay } from "../components/shared/MessageDisplay";
+import { SubmitButton } from "../components/shared/SubmitButton";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -10,80 +21,111 @@ const Register = () => {
   const [role, setRole] = useState("user");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
+    setLoading(true);
     
     try {
+      if (!email || !password) {
+        setError("Email and password are required");
+        return;
+      }
+      
       await register({ email, password, role, full_name: fullName, phone });
-      setMessage("Registration successful! Please login.");
+      setMessage("Registration successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
-    } catch (_err: any) {
-      setError(_err.response?.data?.message || "Registration failed");
+    } catch (error: unknown) {
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null && "response" in error) {
+        const axiosError = error as { response?: { data?: { error?: string; message?: string } } };
+        errorMessage = axiosError.response?.data?.error || 
+                      axiosError.response?.data?.message || 
+                      errorMessage;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "50px auto", padding: "20px" }}>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-        <h2>Register</h2>
-        
-        <input
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: "10px", fontSize: "16px" }}
-        />
-        
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ padding: "10px", fontSize: "16px" }}
-        />
-        
-        <input
-          placeholder="Full Name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
-        />
-        
-        <input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
-        />
-        
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
-        >
-          <option value="user">User (Patient)</option>
-          <option value="doctor">Doctor</option>
-        </select>
-        
-        <button type="submit" style={{ padding: "10px", fontSize: "16px", cursor: "pointer" }}>
-          Register
-        </button>
-        
-        {message && <p style={{ color: "green" }}>{message}</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        
-        <p>
-          Already have an account?{" "}
-          <a href="/login" style={{ color: "blue" }}>Login</a>
-        </p>
-      </form>
+    <div style={containerStyle}>
+      <div style={cardStyle}>
+        <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          <h2 style={headingStyle}>
+            ✨ Create Account
+          </h2>
+          <p style={{ color: "#666", fontSize: "16px" }}>Join our hospital portal</p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={formStyle}>
+          <FormInput
+            label="📧 Email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <FormInput
+            label="🔒 Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <FormInput
+            label="👤 Full Name"
+            placeholder="Enter your full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+
+          <FormInput
+            label="📱 Phone"
+            placeholder="Enter your phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+
+          <FormSelect
+            label="👔 Role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            options={[
+              { value: "user", label: "👤 User (Patient)" },
+              { value: "doctor", label: "👨‍⚕️ Doctor" }
+            ]}
+          />
+
+          <SubmitButton
+            loading={loading}
+            loadingText="⏳ Registering..."
+            defaultText="✨ Register"
+          />
+
+          <MessageDisplay message={message} isError={false} />
+          <MessageDisplay message={error} isError={true} />
+
+          <FormLink
+            text="Already have an account?"
+            linkText="Login here"
+            href="/login"
+          />
+        </form>
+      </div>
     </div>
   );
 };

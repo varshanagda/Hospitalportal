@@ -10,6 +10,7 @@ router.put("/:id/reschedule", authMiddleware, requireUser, appointmentController
 
 // Doctor routes
 router.get("/doctor-appointments", authMiddleware, requireDoctor, appointmentController.getDoctorAppointments);
+router.put("/:id/approve-doctor", authMiddleware, requireDoctor, appointmentController.approveAppointmentByDoctor);
 
 // Admin routes
 router.get("/all", authMiddleware, requireAdmin, appointmentController.getAllAppointments);

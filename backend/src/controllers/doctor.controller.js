@@ -1,4 +1,5 @@
 const pool = require("../db");
+const bcrypt = require("bcrypt");
 
 /**
  * Create/Update doctor profile
@@ -247,11 +248,80 @@ const getDoctorStats = async (req, res) => {
   }
 };
 
+/**
+ * Create doctor (Admin only) - Creates both user and doctor profile
+ */
+const createDoctor = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { email, password, full_name, phone, specialization, qualification, experience_years, consultation_fee } = req.body;
+
+    // Validation
+    if (!email || !password || !full_name || !specialization) {
+      return res.status(400).json({ message: "Email, password, full_name, and specialization are required" });
+    }
+
+    await client.query('BEGIN');
+
+    // Check if user already exists
+    const userExists = await client.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userExists.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ message: "User with this email already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const userResult = await client.query(
+      "INSERT INTO users (email, password, role, full_name, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [email, hashedPassword, 'doctor', full_name, phone]
+    );
+
+    const userId = userResult.rows[0].id;
+
+    // Create doctor profile (auto-approved when created by admin)
+    const doctorResult = await client.query(
+      `INSERT INTO doctors 
+       (user_id, specialization, qualification, experience_years, consultation_fee, is_approved)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING *`,
+      [userId, specialization, qualification || null, experience_years || 0, consultation_fee || 0]
+    );
+
+    await client.query('COMMIT');
+
+    return res.status(201).json({
+      message: "Doctor created successfully",
+      doctor: {
+        ...doctorResult.rows[0],
+        email,
+        full_name,
+        phone
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Create doctor error:", error);
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   createDoctorProfile,
   getDoctorProfile,
   getAllDoctors,
   getDoctorById,
   approveDoctor,
-  getDoctorStats
+  getDoctorStats,
+  createDoctor
 };
