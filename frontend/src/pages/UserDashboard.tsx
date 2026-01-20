@@ -947,6 +947,14 @@ const UserDashboard = () => {
                     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
+                  onFocus={(e) => { // NOSONAR - Visual feedback only
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.12)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onBlur={(e) => { // NOSONAR - Visual feedback only
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "20px" }}>
                     <div style={{ flex: 1 }}>

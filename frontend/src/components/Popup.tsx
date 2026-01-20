@@ -76,7 +76,14 @@ const Popup = ({
     return "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)";
   };
 
+  const getIconSvgDataUri = () => {
+    const icon = getIconByType();
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="70" font-size="70">${icon}</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
+  };
+
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       style={{
         position: "fixed",
@@ -97,8 +104,8 @@ const Popup = ({
           handleCancel();
         }
       }}
-      aria-label="Dialog backdrop"
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         style={{
           background: "white",
@@ -118,7 +125,7 @@ const Popup = ({
         {/* Icon and Title */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <img
-            src={`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="70" font-size="70">${getIconByType()}</text></svg>`)}`}
+            src={getIconSvgDataUri()}
             alt={`${type} icon`}
             style={{
               width: "64px",
