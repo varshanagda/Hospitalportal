@@ -83,7 +83,6 @@ const Popup = ({
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       style={{
         position: "fixed",
@@ -106,7 +105,6 @@ const Popup = ({
       }}
     >
       {/* NOSONAR - Dialog with proper ARIA attributes follows accessibility best practices */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-keys, jsx-a11y/no-static-element-interactions */}
       <div
         style={{
           background: "white",
