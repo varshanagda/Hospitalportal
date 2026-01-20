@@ -1,4 +1,4 @@
-import { handleLinkMouseOver, handleLinkMouseOut } from "./FormHandlers";
+import { handleLinkMouseOver, handleLinkMouseOut, handleLinkFocus, handleLinkBlur } from "./FormHandlers";
 
 interface FormLinkProps {
   text: string;
@@ -19,6 +19,8 @@ export const FormLink = ({ text, linkText, href }: FormLinkProps) => {
         }}
         onMouseOver={handleLinkMouseOver}
         onMouseOut={handleLinkMouseOut}
+        onFocus={handleLinkFocus}
+        onBlur={handleLinkBlur}
       >
         {linkText}
       </a>

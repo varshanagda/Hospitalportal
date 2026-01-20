@@ -76,6 +76,7 @@ const Popup = ({
         animation: "fadeIn 0.3s ease"
       }}
       onClick={handleCancel}
+      role="presentation"
     >
       <div
         style={{
@@ -89,6 +90,8 @@ const Popup = ({
           transform: "scale(1)"
         }}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Icon and Title */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
@@ -198,6 +201,14 @@ const Popup = ({
                 e.currentTarget.style.background = "white";
                 e.currentTarget.style.borderColor = "#e0e0e0";
               }}
+              onFocus={(e) => {
+                e.currentTarget.style.background = "#f8f9fa";
+                e.currentTarget.style.borderColor = "#d0d0d0";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.background = "white";
+                e.currentTarget.style.borderColor = "#e0e0e0";
+              }}
             >
               {cancelText}
             </button>
@@ -228,6 +239,16 @@ const Popup = ({
               }
             }}
             onMouseOut={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+            }}
+            onFocus={(e) => {
+              if (!(type === "prompt" && !input.trim())) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+              }
+            }}
+            onBlur={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
             }}

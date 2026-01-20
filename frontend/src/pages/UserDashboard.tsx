@@ -284,6 +284,16 @@ const UserDashboard = () => {
               e.currentTarget.style.transform = "scale(1)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
             }}
+            onFocus={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.4)";
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+            }}
           >
             Logout
           </button>
@@ -318,6 +328,8 @@ const UserDashboard = () => {
           }}
           onMouseOver={handleTabHover("book")}
           onMouseOut={handleTabHoverOut("book")}
+          onFocus={handleTabHover("book")}
+          onBlur={handleTabHoverOut("book")}
         >
           📅 Book Appointment
         </button>
@@ -340,6 +352,8 @@ const UserDashboard = () => {
           }}
           onMouseOver={handleTabHover("appointments")}
           onMouseOut={handleTabHoverOut("appointments")}
+          onFocus={handleTabHover("appointments")}
+          onBlur={handleTabHoverOut("appointments")}
         >
           📋 My Appointments
         </button>
@@ -446,6 +460,8 @@ const UserDashboard = () => {
                 }}
                 onMouseOver={handleButtonHoverWithLoading}
                 onMouseOut={handleButtonHoverOutWithLoading}
+                onFocus={handleButtonHoverWithLoading}
+                onBlur={handleButtonHoverOutWithLoading}
               >
                 {loading ? (
                   <>
@@ -471,6 +487,8 @@ const UserDashboard = () => {
                   }}
                   onMouseOver={handleButtonHoverWithColor("#5a6268")}
                   onMouseOut={handleButtonHoverOutWithColor("#6c757d")}
+                  onFocus={handleButtonHoverWithColor("#5a6268")}
+                  onBlur={handleButtonHoverOutWithColor("#6c757d")}
                 >
                   ✕ Clear
                 </button>
@@ -527,6 +545,13 @@ const UserDashboard = () => {
                     <div
                       key={doctor.id}
                       onClick={() => setSelectedDoctorId(doctor.id)}
+                      tabIndex={0}
+                      role="button"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          setSelectedDoctorId(doctor.id);
+                        }
+                      }}
                       style={{
                         padding: "24px",
                         border: selectedDoctorId === doctor.id 
@@ -550,6 +575,20 @@ const UserDashboard = () => {
                         }
                       }}
                       onMouseOut={(e) => {
+                        if (selectedDoctorId !== doctor.id) {
+                          e.currentTarget.style.borderColor = "#e0e0e0";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }
+                      }}
+                      onFocus={(e) => {
+                        if (selectedDoctorId !== doctor.id) {
+                          e.currentTarget.style.borderColor = "#667eea";
+                          e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.12)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }
+                      }}
+                      onBlur={(e) => {
                         if (selectedDoctorId !== doctor.id) {
                           e.currentTarget.style.borderColor = "#e0e0e0";
                           e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
@@ -736,6 +775,8 @@ const UserDashboard = () => {
                   }}
                   onMouseOver={handleButtonHoverGeneric}
                   onMouseOut={handleButtonHoverOutGeneric}
+                  onFocus={handleButtonHoverGeneric}
+                  onBlur={handleButtonHoverOutGeneric}
                 >
                   🔍 Find Slots
                 </button>
@@ -780,6 +821,8 @@ const UserDashboard = () => {
                         }}
                         onMouseOver={(e) => e.currentTarget.style.background = "#218838"}
                         onMouseOut={(e) => e.currentTarget.style.background = "#28a745"}
+                        onFocus={(e) => e.currentTarget.style.background = "#218838"}
+                        onBlur={(e) => e.currentTarget.style.background = "#28a745"}
                       >
                         ✅ Book Now
                       </button>
@@ -852,6 +895,7 @@ const UserDashboard = () => {
               {appointments.map((apt) => (
                 <div
                   key={apt.id}
+                  tabIndex={0}
                   style={{
                     padding: "24px",
                     border: "2px solid #e0e0e0",
@@ -865,6 +909,14 @@ const UserDashboard = () => {
                     e.currentTarget.style.transform = "translateY(-2px)";
                   }}
                   onMouseOut={(e) => {
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.12)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onBlur={(e) => {
                     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
@@ -953,6 +1005,14 @@ const UserDashboard = () => {
                           e.currentTarget.style.transform = "translateY(-2px)";
                         }}
                         onMouseOut={(e) => {
+                          e.currentTarget.style.background = "#dc3545";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.background = "#c82333";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onBlur={(e) => {
                           e.currentTarget.style.background = "#dc3545";
                           e.currentTarget.style.transform = "translateY(0)";
                         }}

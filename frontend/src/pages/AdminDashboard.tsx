@@ -115,6 +115,18 @@ const AdminDashboard = () => {
     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
   };
 
+  const handleLogoutButtonFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+    e.currentTarget.style.transform = "scale(1.1)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+  };
+
+  const handleLogoutButtonBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = "rgba(0,0,0,0.1)";
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+  };
+
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "20px" }}>
       {/* Header */}
@@ -143,6 +155,8 @@ const AdminDashboard = () => {
           }}
           onMouseOver={handleLogoutButtonHover}
           onMouseOut={handleLogoutButtonHoverOut}
+          onFocus={handleLogoutButtonFocus}
+          onBlur={handleLogoutButtonBlur}
         >
           Logout
         </button>

@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import type React from "react";
+import type { ReactNode } from "react";
 
 interface HoverButtonProps {
   onClick?: () => void;
@@ -72,6 +73,18 @@ export const HoverButton = ({
     }
   };
 
+  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
+    if (!disabled) {
+      e.currentTarget.style.background = variantStyle.hoverColor;
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
+    if (!disabled) {
+      e.currentTarget.style.background = variantStyle.background;
+    }
+  };
+
   return (
     <button
       type={type}
@@ -80,6 +93,8 @@ export const HoverButton = ({
       style={combinedStyle}
       onMouseOver={handleMouseOver}
       onMouseOut={handleMouseOut}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     >
       {children}
     </button>

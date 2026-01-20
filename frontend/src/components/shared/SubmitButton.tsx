@@ -1,4 +1,4 @@
-import { handleButtonMouseOver, handleButtonMouseOut } from "./FormHandlers";
+import { handleButtonMouseOver, handleButtonMouseOut, handleButtonFocus, handleButtonBlur } from "./FormHandlers";
 import { buttonStyle } from "./FormStyles";
 
 interface SubmitButtonProps {
@@ -10,6 +10,8 @@ interface SubmitButtonProps {
 export const SubmitButton = ({ loading, loadingText, defaultText }: SubmitButtonProps) => {
   const handleButtonOver = (e: React.MouseEvent<HTMLButtonElement>) => handleButtonMouseOver(e, loading);
   const handleButtonOut = (e: React.MouseEvent<HTMLButtonElement>) => handleButtonMouseOut(e, loading);
+  const handleButtonFocusEvent = (e: React.FocusEvent<HTMLButtonElement>) => handleButtonFocus(e, loading);
+  const handleButtonBlurEvent = (e: React.FocusEvent<HTMLButtonElement>) => handleButtonBlur(e, loading);
 
   return (
     <button 
@@ -22,6 +24,8 @@ export const SubmitButton = ({ loading, loadingText, defaultText }: SubmitButton
       }}
       onMouseOver={handleButtonOver}
       onMouseOut={handleButtonOut}
+      onFocus={handleButtonFocusEvent}
+      onBlur={handleButtonBlurEvent}
     >
       {loading ? loadingText : defaultText}
     </button>
