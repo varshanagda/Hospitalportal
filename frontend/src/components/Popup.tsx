@@ -83,7 +83,8 @@ const Popup = ({
   };
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: "fixed",
         top: 0,
@@ -95,7 +96,11 @@ const Popup = ({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 10000,
-        animation: "fadeIn 0.3s ease"
+        animation: "fadeIn 0.3s ease",
+        border: "none",
+        padding: 0,
+        cursor: "default",
+        font: "inherit"
       }}
       onClick={handleCancel}
       onKeyDown={(e) => {
@@ -103,8 +108,6 @@ const Popup = ({
           handleCancel();
         }
       }}
-      role="button"
-      tabIndex={0}
       aria-label="Close dialog"
     >
       <div
@@ -116,7 +119,8 @@ const Popup = ({
           width: "90%",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
           animation: "slideUp 0.3s ease",
-          transform: "scale(1)"
+          transform: "scale(1)",
+          pointerEvents: "auto"
         }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
@@ -284,25 +288,31 @@ const Popup = ({
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-      `}</style>
-    </div>
+    </button>
   );
 };
+
+// Global styles for animations
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+if (!document.head.querySelector('style[data-popup-animations]')) {
+  styleElement.setAttribute('data-popup-animations', '');
+  document.head.appendChild(styleElement);
+}
 
 export default Popup;
