@@ -99,12 +99,14 @@ const Popup = ({
       }}
       onClick={handleCancel}
       onKeyDown={(e) => {
-        if (e.key === "Escape") {
+        if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
           handleCancel();
         }
       }}
+      role="button"
+      tabIndex={0}
+      aria-label="Close dialog"
     >
-      {/* NOSONAR - Dialog with proper ARIA attributes follows accessibility best practices */}
       <div
         style={{
           background: "white",
@@ -116,8 +118,9 @@ const Popup = ({
           animation: "slideUp 0.3s ease",
           transform: "scale(1)"
         }}
-        onClick={(e) => e.stopPropagation()} // NOSONAR - Prevents backdrop click propagation
-        role="dialog" // NOSONAR - Semantic role with proper ARIA, native <dialog> has browser quirks
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
         aria-labelledby="popup-title"
       >
