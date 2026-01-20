@@ -66,6 +66,16 @@ const Popup = ({
     }
   };
 
+  const getBackgroundGradient = () => {
+    if (type === "confirm") {
+      return "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)";
+    }
+    if (type === "prompt") {
+      return "linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)";
+    }
+    return "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)";
+  };
+
   return (
     <div
       style={{
@@ -82,7 +92,12 @@ const Popup = ({
         animation: "fadeIn 0.3s ease"
       }}
       onClick={handleCancel}
-      role="presentation"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          handleCancel();
+        }
+      }}
+      aria-label="Dialog backdrop"
     >
       <div
         style={{
@@ -98,27 +113,24 @@ const Popup = ({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
+        aria-labelledby="popup-title"
       >
         {/* Icon and Title */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <div style={{
-            width: "64px",
-            height: "64px",
-            borderRadius: "50%",
-            background: type === "confirm" 
-              ? "linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)"
-              : type === "prompt"
-              ? "linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)"
-              : "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "32px",
-            margin: "0 auto 16px"
-          }}>
-            {getIconByType()}
-          </div>
-          <h2 style={{
+          <img
+            src={`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="70" font-size="70">${getIconByType()}</text></svg>`)}`}
+            alt={`${type} icon`}
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: getBackgroundGradient(),
+              display: "block",
+              margin: "0 auto 16px",
+              padding: "8px"
+            }}
+          />
+          <h2 id="popup-title" style={{
             margin: 0,
             fontSize: "24px",
             fontWeight: "700",

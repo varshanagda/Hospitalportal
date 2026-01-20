@@ -581,16 +581,10 @@ const UserDashboard = () => {
                 </div>
                 <div style={{ display: "grid", gap: "16px" }}>
                   {doctors.map((doctor) => (
-                    <div
+                    <button
                       key={doctor.id}
                       onClick={() => setSelectedDoctorId(doctor.id)}
-                      tabIndex={0}
-                      role="button"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          setSelectedDoctorId(doctor.id);
-                        }
-                      }}
+                      type="button"
                       style={{
                         padding: "24px",
                         border: selectedDoctorId === doctor.id 
@@ -604,7 +598,10 @@ const UserDashboard = () => {
                         transition: "all 0.3s ease",
                         boxShadow: selectedDoctorId === doctor.id 
                           ? "0 8px 24px rgba(102, 126, 234, 0.25)" 
-                          : "0 2px 8px rgba(0,0,0,0.08)"
+                          : "0 2px 8px rgba(0,0,0,0.08)",
+                        textAlign: "left",
+                        width: "100%",
+                        fontFamily: "inherit"
                       }}
                       onMouseOver={(e) => {
                         if (selectedDoctorId !== doctor.id) {
@@ -724,7 +721,7 @@ const UserDashboard = () => {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -934,7 +931,6 @@ const UserDashboard = () => {
               {appointments.map((apt) => (
                 <div
                   key={apt.id}
-                  tabIndex={0}
                   style={{
                     padding: "24px",
                     border: "2px solid #e0e0e0",
@@ -948,14 +944,6 @@ const UserDashboard = () => {
                     e.currentTarget.style.transform = "translateY(-2px)";
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.12)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onBlur={(e) => {
                     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
